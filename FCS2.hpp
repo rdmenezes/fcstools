@@ -101,17 +101,41 @@ namespace FCSTools
   typedef std::vector<long double> ldouble_vector_t;
   typedef std::vector<ldouble_vector_t> ldouble_vector_list_t;
   
+  struct NDatum
+  {
+    std::string Name, Specification;
+    std::size_t BitSize, Range;
+    std::pair<double,double> Exponent;
+    byteorder_t ByteOrder;
+  };
+  typedef std::vector<NDatum> NData;
+
+  struct Header
+  {
+    std::string File, Mode, Datatype,
+      BeginTime, EndTime, System,
+      Cytometer, Date;
+    std::size_t Total, Nextdata;
+    byteorder_t ByteOrder;
+    NData Parameter;
+    std::map<std::string,std::string> AllKeywords;
+    bool has_keyword (std::string const& key) const {
+      return this->AllKeywords.end () != this->AllKeywords.find (key); }
+    std::string& operator [] (std::string const& key) {
+      return this->AllKeywords[key]; } 
+  };
+
   integral_vector_list_t
   mode_L_integral (const unsigned char* cData,
 		   const unsigned char* cEnd,
-		   byteorders_t const& ByteOrders)
+		   Header const& Data)
   {
-    const std::size_t bordsz = ByteOrders.size ();
+    const std::size_t bordsz = Data.Parameter.size ();
     std::size_t veclength = 0;
     byteorders_t nByteOrders (bordsz);
     for (std::size_t i=0; i<bordsz; ++i)
-      for (std::size_t j=0; j<ByteOrders[i].size (); ++j, ++veclength)
-	nByteOrders[i].push_back (1<<(ByteOrders[i][j]*CHAR_BIT));
+      for (std::size_t j=0; j<Data.Parameter[i].ByteOrder.size (); ++j, ++veclength)
+	nByteOrders[i].push_back (1<<(Data.Parameter[i].ByteOrder[j]*CHAR_BIT));
     
     const std::size_t nElements = (cEnd-cData) / veclength;
     
@@ -136,8 +160,9 @@ namespace FCSTools
   integral_vector_list_t
   mode_A_variable (const unsigned char* cData,
 		   const unsigned char* cEnd,
-		   std::size_t Dimension)
+		   Header const& Data)
   {
+    const std::size_t Dimension = Data.Parameter.size ();
     std::string sData (cData, cEnd);
     std::stringstream ss (sData);
     integral_vector_list_t ivl;
@@ -173,7 +198,7 @@ namespace FCSTools
   }
 
   template <typename ValueType>
-  std::pair<std::map<std::string,std::string>,
+  std::pair<Header,
 	    std::vector< std::vector<ValueType> > >
   Reader (std::istream& FCSFile, bool Compliance_P = false)
   {
@@ -181,6 +206,7 @@ namespace FCSTools
     typedef std::vector<ElementT> VElementT;
 
     VElementT Result;
+    Header Data;
 
     std::string FCSKind;
     std::size_t KeysBegin, KeysEnd, KeySection, DataBegin, DataEnd, DataSection;
@@ -196,13 +222,12 @@ namespace FCSTools
     std::string KeyWordBuffer (cKeyWordBuffer+1, KeySection+1);
     
     std::stringstream ss (KeyWordBuffer);
-    std::map<std::string,std::string> keywords;
     do
       {
 	std::string key, value;
 	std::getline (ss, key, Delimiter);
 	std::getline (ss, value, Delimiter);
-	keywords[key] = value;
+	Data[key] = value;
       }
     while (ss);
     
@@ -211,45 +236,32 @@ namespace FCSTools
     unsigned char cDataBuffer[DataSection+12];
     FCSFile.read ((char*)cDataBuffer, DataSection+1);
     
-    std::size_t nParameters = 0;
-    if (keywords.end () != keywords.find ("$PAR"))
-      nParameters = convert<std::size_t>(keywords["$PAR"]);
+    if (Data.has_keyword ("$PAR"))
+      Data.Parameter = NData(convert<std::size_t>(Data["$PAR"]));
     else
       throw no_par_keyword ();
 
-    std::size_t Nextdata = 0;
-    if (keywords.end () != keywords.find ("$NEXTDATA"))
-      Nextdata = convert<std::size_t>(keywords["$NEXTDATA"]);
+    const std::size_t nParameters = Data.Parameter.size ();
+
+    if (Data.has_keyword ("$NEXTDATA"))
+      Data.Nextdata = convert<std::size_t>(Data["$NEXTDATA"]);
     else if (Compliance_P)
       throw no_nextdata_keyword ();
 
-    std::string System;
-    if (keywords.end () != keywords.find ("$SYSTEM"))
-      System = keywords["$SYS"];
+    if (Data.has_keyword ("$SYSTEM"))
+      Data.System = Data["$SYS"];
 
-    std::string BeginTime;
-    if (keywords.end () != keywords.find ("$BTIM"))
-      BeginTime = keywords["$BTIM"];
+    if (Data.has_keyword ("$BTIM"))
+      Data.BeginTime = Data["$BTIM"];
 
-    std::string EndTime;
-    if (keywords.end () != keywords.find ("$ETIM"))
-      EndTime = keywords["$ETIM"];
+    if (Data.has_keyword ("$ETIM"))
+      Data.EndTime = Data["$ETIM"];
 
-    std::string File;
-    if (keywords.end () != keywords.find ("$FIL"))
-      File = keywords["$FIL"];
+    if (Data.has_keyword ("$FIL"))
+      Data.File = Data["$FIL"];
 
-    std::string Date;
-    if (keywords.end () != keywords.find ("$DATE"))
-      Date = keywords["$DATE"];
-
-    std::vector<std::size_t> BitSize (nParameters, 0);
-    std::vector<std::size_t> Range (nParameters, 0);
-    std::vector<std::string> Name (nParameters, "");
-    std::vector<std::pair<double,double> > Exponent (nParameters);
-    std::vector<std::string> Source (nParameters, "");
-    
-    std::size_t stdBitSize = 0;
+    if (Data.has_keyword ("$DATE"))
+      Data.Date = Data["$DATE"];
 
     bool Variable = false;
     
@@ -259,27 +271,27 @@ namespace FCSTools
 	par << "$P" << (npar+1) << "B";
 	std::string key;
 	par >> key;
-	if (keywords.end () != keywords.find (key))
+	if (Data.has_keyword (key))
 	  {
-	    if ("*" == keywords[key])
+	    if ("*" == Data[key])
 	      {
 		Variable = true;
-		BitSize[npar] = 0; // variable bit-size
+		Data.Parameter[npar].BitSize = 0; // variable bit-size
 	      }
 	    else
-	      BitSize[npar] = convert<std::size_t>(keywords[key]);
+	      Data.Parameter[npar].BitSize = convert<std::size_t>(Data[key]);
 	  }
 	else
 	  throw no_bitsize_keyword (npar);
-	if ((stdBitSize%CHAR_BIT) != 0)
+	if ((Data.Parameter[npar].BitSize%CHAR_BIT) != 0)
 	  throw invalid_bit_length ();
 	par.clear ();
 	par.str ("");
 	
 	par << "$P" << (npar+1) << "R";
 	par >> key;
-	if (keywords.end () != keywords.find (key))
-	  Range[npar] = convert<std::size_t>(keywords[key]);
+	if (Data.has_keyword (key))
+	  Data.Parameter[npar].Range = convert<std::size_t>(Data[key]);
 	else
 	  throw no_range_keyword (npar);
 	par.clear ();
@@ -287,111 +299,107 @@ namespace FCSTools
 	
 	par << "$P" << (npar+1) << "N";
 	par >> key;
-	if (keywords.end () != keywords.find (key))
-	  Name[npar] = keywords[key];
+	if (Data.has_keyword (key))
+	  Data.Parameter[npar].Name = Data[key];
 	par.clear ();
 	par.str ("");
 	
 	par << "$P" << (npar+1) << "E";
 	par >> key;
-	if (keywords.end () != keywords.find (key))
+	if (Data.has_keyword (key))
 	  {
-	    std::stringstream exp (keywords[key]);
+	    std::stringstream exp (Data[key]);
 	    double L, R;
 	    std::string sL, sR;
 	    std::getline (exp, sL, ',');
 	    std::getline (exp, sR);
 	    L = convert<double>(sL);
 	    R = convert<double>(sR);
+	    Data.Parameter[npar].Exponent = std::make_pair (L, R);
 	  }
 	par.clear ();
 	par.str ("");
 	
 	par << "$P" << (npar+1) << "S";
 	par >> key;
-	if (keywords.end () != keywords.find (key))
-	  Source[npar] = keywords[key];
+	if (Data.has_keyword (key))
+	  Data.Parameter[npar].Specification = Data[key];
 	par.clear ();
 	par.str ("");
       }
     
     std::stringstream byteorder;
-    if (keywords.end () != keywords.find ("$BYTEORD"))
-      byteorder << keywords["$BYTEORD"];
+    if (Data.has_keyword ("$BYTEORD"))
+      byteorder << Data["$BYTEORD"];
     else
       throw no_byteorder_keyword ();
-    std::vector<std::size_t> preByteOrder;
+
     while (true)
       {
 	std::string byteo;
 	std::getline (byteorder, byteo, ',');
 	if (! byteorder)
 	  break;
-	preByteOrder.push_back (convert<std::size_t>(byteo)-1);
+	Data.ByteOrder.push_back (convert<std::size_t>(byteo)-1);
       }
     
-    std::vector<std::vector<std::size_t> > ByteOrders (nParameters);
     for (std::size_t i=0; i<nParameters; ++i)
-      for (std::size_t j=0; j<preByteOrder.size (); ++j)
-	if (preByteOrder[j] < BitSize[i]/CHAR_BIT)
-	  ByteOrders[i].push_back (preByteOrder[j]);
+      for (std::size_t j=0; j<Data.ByteOrder.size (); ++j)
+	if (Data.ByteOrder[j] < Data.Parameter[i].BitSize/CHAR_BIT)
+	  Data.Parameter[i].ByteOrder.push_back (Data.ByteOrder[j]);
     
-    std::size_t Total = 0;
-    if (keywords.end () != keywords.find ("$TOT"))
-      Total = convert<std::size_t>(keywords["$TOT"]);
+    if (Data.has_keyword ("$TOT"))
+      Data.Total = convert<std::size_t>(Data["$TOT"]);
     else if (Compliance_P)
       throw no_total_keyword ();
     
     // legal: [L]ist, [U]ncorrelated, [C]orrelated
-    std::string Mode;
-    if (keywords.end () != keywords.find ("$MODE"))
-      Mode = keywords["$MODE"];
+    if (Data.has_keyword ("$MODE"))
+      Data.Mode = Data["$MODE"];
     else
       throw no_mode_keyword ();
     
     // legal: [A]SCII, [I]nteger, [D]ouble, [F]loat
-    std::string Datatype;
-    if (keywords.end () != keywords.find ("$DATATYPE"))
-      Datatype = keywords["$DATATYPE"];
+    if (Data.has_keyword ("$DATATYPE"))
+      Data.Datatype = Data["$DATATYPE"];
     else
       throw no_datatype_keyword ();
-    if ("A" == Datatype && Variable)
-      Datatype = "*";
+    if ("A" == Data.Datatype && Variable)
+      Data.Datatype = "*";
     
-    std::string Cytometer;
-    if (keywords.end () != keywords.find ("$CYT"))
-      Cytometer = keywords["$CYT"];
+    if (Data.has_keyword ("$CYT"))
+      Data.Cytometer = Data["$CYT"];
      
-    if ("L" == Mode)
+    if ("L" == Data.Mode)
       { // list of vectors
 	// we grab up to, but no more than Total
 	integral_vector_list_t ivl;
-	switch (Datatype[0])
+	switch (Data.Datatype[0])
 	  {
 	  case 'I': ivl
 	      = mode_L_integral (cDataBuffer,
 				 cDataBuffer+DataSection+1,
-				 ByteOrders);
+				 Data);
 	    break;
 	  case '*': ivl
 	      = mode_A_variable (cDataBuffer,
 				 cDataBuffer+DataSection+1,
-				 nParameters);
+				 Data);
 	    break;
 	  default : break;
 	  }
 	convert (Result, ivl);
       }
-    else if ("U" == Mode)
+    else if ("U" == Data.Mode)
       { // histograms of ranged-size(???)
 	throw uncorrelated_mode ();
       }
-    else if ("C" == Mode)
+    else if ("C" == Data.Mode)
       { // histograms of ranged-size(???)
 	throw correlated_mode ();
       }
 
-    return std::make_pair (keywords, Result);
+    return std::make_pair (Data, Result);
   }
 
 }
