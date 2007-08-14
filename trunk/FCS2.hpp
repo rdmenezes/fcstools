@@ -223,6 +223,26 @@ namespace FCSTools
     else if (Compliance_P)
       throw no_nextdata_keyword ();
 
+    std::string System;
+    if (keywords.end () != keywords.find ("$SYSTEM"))
+      System = keywords["$SYS"];
+
+    std::string BeginTime;
+    if (keywords.end () != keywords.find ("$BTIM"))
+      BeginTime = keywords["$BTIM"];
+
+    std::string EndTime;
+    if (keywords.end () != keywords.find ("$ETIM"))
+      EndTime = keywords["$ETIM"];
+
+    std::string File;
+    if (keywords.end () != keywords.find ("$FIL"))
+      File = keywords["$FIL"];
+
+    std::string Date;
+    if (keywords.end () != keywords.find ("$DATE"))
+      Date = keywords["$DATE"];
+
     std::vector<std::size_t> BitSize (nParameters, 0);
     std::vector<std::size_t> Range (nParameters, 0);
     std::vector<std::string> Name (nParameters, "");
