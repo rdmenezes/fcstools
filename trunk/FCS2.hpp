@@ -8,6 +8,7 @@
 #include<iostream>
 #include<sstream>
 #include<exception>
+#include<iomanip>
 
 namespace FCSTools
 {
@@ -23,6 +24,10 @@ namespace FCSTools
   };
   typedef T_no_nkeyword<no_keyword> no_nkeyword;
   typedef T_no_nkeyword<no_keyword_fatal> no_nkeyword_fatal;
+  struct invalid_datatype : fcs_error {
+    virtual const char* what () const throw () {
+      return "Invalid datatype"; }
+  };
   
   struct invalid_bit_length : fcs_error {
     virtual const char* what () const throw () {
@@ -36,6 +41,19 @@ namespace FCSTools
     virtual const char* what () const throw () {
       return "Correlated mode is unsupported"; }
   };
+  struct float_datatype : invalid_datatype {
+    virtual const char* what () const throw () {
+      return "Float is an invalid datatype";}
+  };
+  struct double_datatype : invalid_datatype {
+    virtual const char* what () const throw () {
+      return "Double is an invalid datatype";}
+  };
+  struct fixed_ascii_datatype : invalid_datatype {
+    virtual const char* what () const throw () {
+      return "Fixed ASCII is an invalid datatype";}
+  };
+  
 
   // COMPLIANT KEYWORDS
   struct no_total_keyword : no_keyword {
@@ -210,7 +228,7 @@ namespace FCSTools
     // first, compute how long the data is going to be
     std::string VariableString;
     std::size_t DataLength;
-    if ("*" == fcs.Head.Mode)
+    if ("*" == fcs.Head.Datatype)
       {
 	std::stringstream ss;
 	for (std::size_t i=0; i<fcs.Data.size (); ++i)
@@ -219,26 +237,77 @@ namespace FCSTools
 	VariableString = ss.str ();
 	DataLength = VariableString.size ();
       }
-    if ("I" == fcs.Head.Mode)
+    else if ("I" == fcs.Head.Datatype)
       { // precompute the length
 	// we ignore user pleas for byte-lengths or whatnot
-	DataLength = sizeof(signed int) * fcs.Data.size () * fcs.Head.Parameter.size ();
+	DataLength = sizeof(signed long) * fcs.Data.size () * fcs.Head.Parameter.size ();
       }
+    else
+      throw invalid_datatype ();
+
     unsigned char Data[DataLength];
-    if ("*" == fcs.Head.Mode)
+
+    if ("*" == fcs.Head.Datatype)
       for (std::size_t i=0; i<DataLength; ++i)
 	Data[i] = VariableString[i];
-    if ("I" == fcs.Head.Mode)
+    else if ("I" == fcs.Head.Datatype)
       {
 	std::size_t Cursor = 0;
+	const std::size_t ByteLength = sizeof (signed long);
 	for (std::size_t i=0; i<fcs.Data.size (); ++i)
-	  for (std::size_t j=0; j<fcs.Data[i].size (); ++j, ++Cursor)
+	  for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
 	    {
 	      unsigned int val = fcs.Data[i][j];
-	      // finish here...
+	      // we're not going to fuck with clever byte-reording
+	      // we're going to do this algebraically
+	      // it's slower, but guaranteed to be platform independent
+	      for (std::size_t k=0; k<ByteLength; ++k, ++Cursor)
+		{
+		  const std::size_t Modulus = (1UL<<(CHAR_BIT * (k+1)));
+		  const std::size_t Divisor = (1UL<<(CHAR_BIT * k));
+		  Data[Cursor] = (val % Modulus) / Divisor;
+		}
 	    }
       }
-    throw std::exception ();
+    else
+      throw invalid_datatype ();
+
+    std::stringstream ssKeywords;
+    ssKeywords << "/$TOT/" << fcs.Data.size ()
+	       << "/$PAR/" << fcs.Head.Parameter.size ()
+	       << "/$NEXTDATA/0"
+	       << "/$BYTEORD/1,2,3,4"
+	       << "/$DATATYPE/" << fcs.Head.Datatype
+	       << "/$MODE/" << fcs.Head.Mode;
+    std::size_t sBitSize;
+    if ("I" == fcs.Head.Datatype)
+      sBitSize = sizeof(unsigned long) * CHAR_BIT;
+    for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+      {
+	std::size_t N = i+1;
+	ssKeywords << "/$P" << N << "B/";
+	if (sBitSize > 0) ssKeywords << sBitSize;
+	else ssKeywords << "*";
+	ssKeywords << "/$P" << N << "R/" << fcs.Head.Parameter[i].Range;
+	if (fcs.Head.Parameter[i].Name.size () > 0)
+	  ssKeywords << "/$P" << N << "N/" << fcs.Head.Parameter[i].Name;
+      }
+    ssKeywords << "/";
+    std::string Keywords = ssKeywords.str ();
+
+    FCSFile << "FCS2.0    ";
+    FCSFile.fill (' ');
+    FCSFile << std::setw (8) << 256
+	    << std::setw (8) << (256+Keywords.size()-1)
+	    << std::setw (8) << (256+Keywords.size()+25)
+	    << std::setw (8) << (256+Keywords.size()+25+DataLength)
+	    << std::setw (8) << 0
+	    << std::setw (8) << 0
+	    << std::setw (256-58) << " "
+	    << Keywords
+	    << std::setw (25) << " ";
+    FCSFile.write ((char*)Data, DataLength);
+    return FCSFile;
   }
 
   template <typename ValueType>
