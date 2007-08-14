@@ -12,11 +12,67 @@
 namespace FCSTools
 {
 
-  struct invalid_bit_length : std::exception
-  {
-    virtual const char* what () const
-    {
-    }
+  struct fcs_error : std::exception {};
+  struct no_keyword : fcs_error {};
+  struct no_keyword_fatal : no_keyword {};
+  template <typename Base>
+  struct T_no_nkeyword : Base {
+    T_no_nkeyword (int n=0) : n_(n) {}
+    virtual int N () const { return this->n_; }
+    int n_;
+  };
+  typedef T_no_nkeyword<no_keyword> no_nkeyword;
+  typedef T_no_nkeyword<no_keyword_fatal> no_nkeyword_fatal;
+  
+  struct invalid_bit_length : fcs_error {
+    virtual const char* what () const throw () {
+      return "Invalid bit length for parameter"; }
+  };
+  struct uncorrelated_mode : fcs_error {
+    virtual const char* what () const throw () {
+      return "Uncorrelated mode is unsupported"; }
+  };
+  struct correlated_mode : fcs_error {
+    virtual const char* what () const throw () {
+      return "Correlated mode is unsupported"; }
+  };
+
+  // COMPLIANT KEYWORDS
+  struct no_total_keyword : no_keyword {
+    virtual const char* what () const throw () {
+      return "TOT"; }
+  };
+  struct no_nextdata_keyword : no_keyword {
+    virtual const char* what () const throw () {
+      return "NEXTDATA"; }
+  };
+
+  // FATAL KEYWORDS
+  struct no_datatype_keyword : no_keyword_fatal {
+    virtual const char* what () const throw () {
+      return "DATATYPE"; }
+  };
+  struct no_byteorder_keyword : no_keyword_fatal {
+    virtual const char* what () const throw () {
+      return "BYTEORDER"; }
+  };
+  struct no_mode_keyword : no_keyword_fatal {
+    virtual const char* what () const throw () {
+      return "MODE"; }
+  };
+  struct no_par_keyword : no_keyword_fatal {
+    virtual const char* what () const throw () {
+      return "PAR"; }
+  };
+  struct no_bitsize_keyword : no_nkeyword_fatal {
+    no_bitsize_keyword (int n=0) : no_nkeyword_fatal (n) {}
+    virtual const char* what () const throw () {
+      return "PNB"; }
+  };
+  struct no_range_keyword : no_nkeyword_fatal {
+    no_range_keyword (int n=0) : no_nkeyword_fatal (n) {}
+    virtual const char* what () const throw () {
+      return "PNR"; }
   };
 
   template <typename T>
@@ -41,6 +97,9 @@ namespace FCSTools
   
   typedef std::vector<signed long> integral_vector_t;
   typedef std::vector<integral_vector_t> integral_vector_list_t;
+
+  typedef std::vector<long double> ldouble_vector_t;
+  typedef std::vector<ldouble_vector_t> ldouble_vector_list_t;
   
   integral_vector_list_t
   mode_L_integral (const unsigned char* cData,
@@ -101,8 +160,28 @@ namespace FCSTools
     return ivl;
   }
   
-  void Reader (std::istream& FCSFile)
+  template <typename LValueType, typename RValueType>
+  void
+  convert (std::vector< std::vector<LValueType> >& Result,
+	   std::vector< std::vector<RValueType> > const& Data)
   {
+    const std::size_t DSize = Data.size ();
+    Result = std::vector< std::vector<LValueType> >(DSize);
+    for (std::size_t i=0; i<DSize; ++i)
+      for (std::size_t j=0; j<Data[i].size (); ++j)
+    	Result[i].push_back ((LValueType)Data[i][j]);
+  }
+
+  template <typename ValueType>
+  std::pair<std::map<std::string,std::string>,
+	    std::vector< std::vector<ValueType> > >
+  Reader (std::istream& FCSFile, bool Compliance_P = false)
+  {
+    typedef std::vector<ValueType> ElementT;
+    typedef std::vector<ElementT> VElementT;
+
+    VElementT Result;
+
     std::string FCSKind;
     std::size_t KeysBegin, KeysEnd, KeySection, DataBegin, DataEnd, DataSection;
     FCSFile >> FCSKind >> KeysBegin >> KeysEnd >> DataBegin >> DataEnd;
@@ -132,7 +211,18 @@ namespace FCSTools
     unsigned char cDataBuffer[DataSection+12];
     FCSFile.read ((char*)cDataBuffer, DataSection+1);
     
-    std::size_t nParameters = convert<std::size_t>(keywords["$PAR"]);
+    std::size_t nParameters = 0;
+    if (keywords.end () != keywords.find ("$PAR"))
+      nParameters = convert<std::size_t>(keywords["$PAR"]);
+    else
+      throw no_par_keyword ();
+
+    std::size_t Nextdata = 0;
+    if (keywords.end () != keywords.find ("$NEXTDATA"))
+      Nextdata = convert<std::size_t>(keywords["$NEXTDATA"]);
+    else if (Compliance_P)
+      throw no_nextdata_keyword ();
+
     std::vector<std::size_t> BitSize (nParameters, 0);
     std::vector<std::size_t> Range (nParameters, 0);
     std::vector<std::string> Name (nParameters, "");
@@ -140,7 +230,7 @@ namespace FCSTools
     std::vector<std::string> Source (nParameters, "");
     
     std::size_t stdBitSize = 0;
-    
+
     bool Variable = false;
     
     for (std::size_t npar = 0; npar < nParameters; ++npar)
@@ -149,33 +239,36 @@ namespace FCSTools
 	par << "$P" << (npar+1) << "B";
 	std::string key;
 	par >> key;
-	if ("*" == keywords[key])
+	if (keywords.end () != keywords.find (key))
 	  {
-	    Variable = true;
-	    BitSize[npar] = 0; // variable bit-size
+	    if ("*" == keywords[key])
+	      {
+		Variable = true;
+		BitSize[npar] = 0; // variable bit-size
+	      }
+	    else
+	      BitSize[npar] = convert<std::size_t>(keywords[key]);
 	  }
 	else
-	  BitSize[npar] = convert<std::size_t>(keywords[key]);
+	  throw no_bitsize_keyword (npar);
 	if ((stdBitSize%CHAR_BIT) != 0)
-	  {
-	    std::cout << "Invalid bit-length for integer." << std::endl;
-	    return;
-	  }
+	  throw invalid_bit_length ();
 	par.clear ();
 	par.str ("");
 	
 	par << "$P" << (npar+1) << "R";
 	par >> key;
-	Range[npar] = convert<std::size_t>(keywords[key]);
+	if (keywords.end () != keywords.find (key))
+	  Range[npar] = convert<std::size_t>(keywords[key]);
+	else
+	  throw no_range_keyword (npar);
 	par.clear ();
 	par.str ("");
 	
 	par << "$P" << (npar+1) << "N";
 	par >> key;
 	if (keywords.end () != keywords.find (key))
-	  {
-	    Name[npar] = keywords[key];
-	  }
+	  Name[npar] = keywords[key];
 	par.clear ();
 	par.str ("");
 	
@@ -197,14 +290,16 @@ namespace FCSTools
 	par << "$P" << (npar+1) << "S";
 	par >> key;
 	if (keywords.end () != keywords.find (key))
-	  {
-	    Source[npar] = keywords[key];
-	  }
+	  Source[npar] = keywords[key];
 	par.clear ();
 	par.str ("");
       }
     
-    std::stringstream byteorder (keywords["$BYTEORD"]);
+    std::stringstream byteorder;
+    if (keywords.end () != keywords.find ("$BYTEORD"))
+      byteorder << keywords["$BYTEORD"];
+    else
+      throw no_byteorder_keyword ();
     std::vector<std::size_t> preByteOrder;
     while (true)
       {
@@ -224,45 +319,59 @@ namespace FCSTools
     std::size_t Total = 0;
     if (keywords.end () != keywords.find ("$TOT"))
       Total = convert<std::size_t>(keywords["$TOT"]);
+    else if (Compliance_P)
+      throw no_total_keyword ();
     
     // legal: [L]ist, [U]ncorrelated, [C]orrelated
-    std::string Mode = keywords["$MODE"];
+    std::string Mode;
+    if (keywords.end () != keywords.find ("$MODE"))
+      Mode = keywords["$MODE"];
+    else
+      throw no_mode_keyword ();
     
     // legal: [A]SCII, [I]nteger, [D]ouble, [F]loat
-    std::string Datatype = keywords["$DATATYPE"];
+    std::string Datatype;
+    if (keywords.end () != keywords.find ("$DATATYPE"))
+      Datatype = keywords["$DATATYPE"];
+    else
+      throw no_datatype_keyword ();
     if ("A" == Datatype && Variable)
       Datatype = "*";
     
     std::string Cytometer;
     if (keywords.end () != keywords.find ("$CYT"))
-      {
-	Cytometer = keywords["$CYT"];
-      }
-    
+      Cytometer = keywords["$CYT"];
+     
     if ("L" == Mode)
       { // list of vectors
 	// we grab up to, but no more than Total
+	integral_vector_list_t ivl;
 	switch (Datatype[0])
 	  {
-	  case 'I': mode_L_integral (cDataBuffer,
-				     cDataBuffer+DataSection+1,
-				     ByteOrders);
+	  case 'I': ivl
+	      = mode_L_integral (cDataBuffer,
+				 cDataBuffer+DataSection+1,
+				 ByteOrders);
 	    break;
-	  case '*': mode_A_variable (cDataBuffer,
-				     cDataBuffer+DataSection+1,
-				     nParameters);
+	  case '*': ivl
+	      = mode_A_variable (cDataBuffer,
+				 cDataBuffer+DataSection+1,
+				 nParameters);
 	    break;
 	  default : break;
 	  }
+	convert (Result, ivl);
       }
     else if ("U" == Mode)
       { // histograms of ranged-size(???)
-	std::cout << "Uncorrelated mode is not supported" << std::endl;
+	throw uncorrelated_mode ();
       }
     else if ("C" == Mode)
       { // histograms of ranged-size(???)
-	std::cout << "Correlated mode is not supported" << std::endl;
+	throw correlated_mode ();
       }
+
+    return std::make_pair (keywords, Result);
   }
 
 }
