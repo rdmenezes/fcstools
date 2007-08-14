@@ -122,7 +122,7 @@ namespace FCSTools
     bool has_keyword (std::string const& key) const {
       return this->AllKeywords.end () != this->AllKeywords.find (key); }
     std::string& operator [] (std::string const& key) {
-      return this->AllKeywords[key]; } 
+      return this->AllKeywords[key]; }
   };
 
   integral_vector_list_t
@@ -198,21 +198,65 @@ namespace FCSTools
   }
 
   template <typename ValueType>
-  std::pair<Header,
-	    std::vector< std::vector<ValueType> > >
+  struct FCS
+  {
+    Header Head;
+    std::vector<std::vector<ValueType> > Data;
+  };
+
+  template <typename ValueType>
+  bool Writer (std::ostream& FCSFile, FCS<ValueType> const& fcs)
+  {
+    // first, compute how long the data is going to be
+    std::string VariableString;
+    std::size_t DataLength;
+    if ("*" == fcs.Head.Mode)
+      {
+	std::stringstream ss;
+	for (std::size_t i=0; i<fcs.Data.size (); ++i)
+	  for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
+	    ss << fcs.Data[i][j] << " ";
+	VariableString = ss.str ();
+	DataLength = VariableString.size ();
+      }
+    if ("I" == fcs.Head.Mode)
+      { // precompute the length
+	// we ignore user pleas for byte-lengths or whatnot
+	DataLength = sizeof(signed int) * fcs.Data.size () * fcs.Head.Parameter.size ();
+      }
+    unsigned char Data[DataLength];
+    if ("*" == fcs.Head.Mode)
+      for (std::size_t i=0; i<DataLength; ++i)
+	Data[i] = VariableString[i];
+    if ("I" == fcs.Head.Mode)
+      {
+	std::size_t Cursor = 0;
+	for (std::size_t i=0; i<fcs.Data.size (); ++i)
+	  for (std::size_t j=0; j<fcs.Data[i].size (); ++j, ++Cursor)
+	    {
+	      unsigned int val = fcs.Data[i][j];
+	      // finish here...
+	    }
+      }
+    throw std::exception ();
+  }
+
+  template <typename ValueType>
+  FCS<ValueType>
   Reader (std::istream& FCSFile, bool Compliance_P = false)
   {
     typedef std::vector<ValueType> ElementT;
     typedef std::vector<ElementT> VElementT;
 
-    VElementT Result;
-    Header Data;
+    FCS<ValueType> fcs;
+    Header& Head = fcs.Head;
+    VElementT& Data = fcs.Data;
 
     std::string FCSKind;
-    std::size_t KeysBegin, KeysEnd, KeySection, DataBegin, DataEnd, DataSection;
-    FCSFile >> FCSKind >> KeysBegin >> KeysEnd >> DataBegin >> DataEnd;
+    std::size_t KeysBegin, KeysEnd, KeySection, HeadBegin, HeadEnd, HeadSection;
+    FCSFile >> FCSKind >> KeysBegin >> KeysEnd >> HeadBegin >> HeadEnd;
     KeySection = KeysEnd - KeysBegin + 1;
-    DataSection = DataEnd - DataBegin + 1;
+    HeadSection = HeadEnd - HeadBegin + 1;
     
     FCSFile.seekg (KeysBegin);
     
@@ -227,41 +271,41 @@ namespace FCSTools
 	std::string key, value;
 	std::getline (ss, key, Delimiter);
 	std::getline (ss, value, Delimiter);
-	Data[key] = value;
+	Head[key] = value;
       }
     while (ss);
     
-    FCSFile.seekg (DataBegin);
+    FCSFile.seekg (HeadBegin);
     
-    unsigned char cDataBuffer[DataSection+12];
-    FCSFile.read ((char*)cDataBuffer, DataSection+1);
+    unsigned char cHeadBuffer[HeadSection+12];
+    FCSFile.read ((char*)cHeadBuffer, HeadSection+1);
     
-    if (Data.has_keyword ("$PAR"))
-      Data.Parameter = NData(convert<std::size_t>(Data["$PAR"]));
+    if (Head.has_keyword ("$PAR"))
+      Head.Parameter = NData(convert<std::size_t>(Head["$PAR"]));
     else
       throw no_par_keyword ();
 
-    const std::size_t nParameters = Data.Parameter.size ();
+    const std::size_t nParameters = Head.Parameter.size ();
 
-    if (Data.has_keyword ("$NEXTDATA"))
-      Data.Nextdata = convert<std::size_t>(Data["$NEXTDATA"]);
+    if (Head.has_keyword ("$NEXTDATA"))
+      Head.Nextdata = convert<std::size_t>(Head["$NEXTDATA"]);
     else if (Compliance_P)
       throw no_nextdata_keyword ();
 
-    if (Data.has_keyword ("$SYSTEM"))
-      Data.System = Data["$SYS"];
+    if (Head.has_keyword ("$SYSTEM"))
+      Head.System = Head["$SYS"];
 
-    if (Data.has_keyword ("$BTIM"))
-      Data.BeginTime = Data["$BTIM"];
+    if (Head.has_keyword ("$BTIM"))
+      Head.BeginTime = Head["$BTIM"];
 
-    if (Data.has_keyword ("$ETIM"))
-      Data.EndTime = Data["$ETIM"];
+    if (Head.has_keyword ("$ETIM"))
+      Head.EndTime = Head["$ETIM"];
 
-    if (Data.has_keyword ("$FIL"))
-      Data.File = Data["$FIL"];
+    if (Head.has_keyword ("$FIL"))
+      Head.File = Head["$FIL"];
 
-    if (Data.has_keyword ("$DATE"))
-      Data.Date = Data["$DATE"];
+    if (Head.has_keyword ("$DATE"))
+      Head.Date = Head["$DATE"];
 
     bool Variable = false;
     
@@ -271,27 +315,27 @@ namespace FCSTools
 	par << "$P" << (npar+1) << "B";
 	std::string key;
 	par >> key;
-	if (Data.has_keyword (key))
+	if (Head.has_keyword (key))
 	  {
-	    if ("*" == Data[key])
+	    if ("*" == Head[key])
 	      {
 		Variable = true;
-		Data.Parameter[npar].BitSize = 0; // variable bit-size
+		Head.Parameter[npar].BitSize = 0; // variable bit-size
 	      }
 	    else
-	      Data.Parameter[npar].BitSize = convert<std::size_t>(Data[key]);
+	      Head.Parameter[npar].BitSize = convert<std::size_t>(Head[key]);
 	  }
 	else
 	  throw no_bitsize_keyword (npar);
-	if ((Data.Parameter[npar].BitSize%CHAR_BIT) != 0)
+	if ((Head.Parameter[npar].BitSize%CHAR_BIT) != 0)
 	  throw invalid_bit_length ();
 	par.clear ();
 	par.str ("");
 	
 	par << "$P" << (npar+1) << "R";
 	par >> key;
-	if (Data.has_keyword (key))
-	  Data.Parameter[npar].Range = convert<std::size_t>(Data[key]);
+	if (Head.has_keyword (key))
+	  Head.Parameter[npar].Range = convert<std::size_t>(Head[key]);
 	else
 	  throw no_range_keyword (npar);
 	par.clear ();
@@ -299,38 +343,38 @@ namespace FCSTools
 	
 	par << "$P" << (npar+1) << "N";
 	par >> key;
-	if (Data.has_keyword (key))
-	  Data.Parameter[npar].Name = Data[key];
+	if (Head.has_keyword (key))
+	  Head.Parameter[npar].Name = Head[key];
 	par.clear ();
 	par.str ("");
 	
 	par << "$P" << (npar+1) << "E";
 	par >> key;
-	if (Data.has_keyword (key))
+	if (Head.has_keyword (key))
 	  {
-	    std::stringstream exp (Data[key]);
+	    std::stringstream exp (Head[key]);
 	    double L, R;
 	    std::string sL, sR;
 	    std::getline (exp, sL, ',');
 	    std::getline (exp, sR);
 	    L = convert<double>(sL);
 	    R = convert<double>(sR);
-	    Data.Parameter[npar].Exponent = std::make_pair (L, R);
+	    Head.Parameter[npar].Exponent = std::make_pair (L, R);
 	  }
 	par.clear ();
 	par.str ("");
 	
 	par << "$P" << (npar+1) << "S";
 	par >> key;
-	if (Data.has_keyword (key))
-	  Data.Parameter[npar].Specification = Data[key];
+	if (Head.has_keyword (key))
+	  Head.Parameter[npar].Specification = Head[key];
 	par.clear ();
 	par.str ("");
       }
     
     std::stringstream byteorder;
-    if (Data.has_keyword ("$BYTEORD"))
-      byteorder << Data["$BYTEORD"];
+    if (Head.has_keyword ("$BYTEORD"))
+      byteorder << Head["$BYTEORD"];
     else
       throw no_byteorder_keyword ();
 
@@ -340,66 +384,66 @@ namespace FCSTools
 	std::getline (byteorder, byteo, ',');
 	if (! byteorder)
 	  break;
-	Data.ByteOrder.push_back (convert<std::size_t>(byteo)-1);
+	Head.ByteOrder.push_back (convert<std::size_t>(byteo)-1);
       }
     
     for (std::size_t i=0; i<nParameters; ++i)
-      for (std::size_t j=0; j<Data.ByteOrder.size (); ++j)
-	if (Data.ByteOrder[j] < Data.Parameter[i].BitSize/CHAR_BIT)
-	  Data.Parameter[i].ByteOrder.push_back (Data.ByteOrder[j]);
+      for (std::size_t j=0; j<Head.ByteOrder.size (); ++j)
+	if (Head.ByteOrder[j] < Head.Parameter[i].BitSize/CHAR_BIT)
+	  Head.Parameter[i].ByteOrder.push_back (Head.ByteOrder[j]);
     
-    if (Data.has_keyword ("$TOT"))
-      Data.Total = convert<std::size_t>(Data["$TOT"]);
+    if (Head.has_keyword ("$TOT"))
+      Head.Total = convert<std::size_t>(Head["$TOT"]);
     else if (Compliance_P)
       throw no_total_keyword ();
     
     // legal: [L]ist, [U]ncorrelated, [C]orrelated
-    if (Data.has_keyword ("$MODE"))
-      Data.Mode = Data["$MODE"];
+    if (Head.has_keyword ("$MODE"))
+      Head.Mode = Head["$MODE"];
     else
       throw no_mode_keyword ();
     
     // legal: [A]SCII, [I]nteger, [D]ouble, [F]loat
-    if (Data.has_keyword ("$DATATYPE"))
-      Data.Datatype = Data["$DATATYPE"];
+    if (Head.has_keyword ("$DATATYPE"))
+      Head.Datatype = Head["$DATATYPE"];
     else
       throw no_datatype_keyword ();
-    if ("A" == Data.Datatype && Variable)
-      Data.Datatype = "*";
+    if ("A" == Head.Datatype && Variable)
+      Head.Datatype = "*";
     
-    if (Data.has_keyword ("$CYT"))
-      Data.Cytometer = Data["$CYT"];
+    if (Head.has_keyword ("$CYT"))
+      Head.Cytometer = Head["$CYT"];
      
-    if ("L" == Data.Mode)
+    if ("L" == Head.Mode)
       { // list of vectors
 	// we grab up to, but no more than Total
 	integral_vector_list_t ivl;
-	switch (Data.Datatype[0])
+	switch (Head.Datatype[0])
 	  {
 	  case 'I': ivl
-	      = mode_L_integral (cDataBuffer,
-				 cDataBuffer+DataSection+1,
-				 Data);
+	      = mode_L_integral (cHeadBuffer,
+				 cHeadBuffer+HeadSection+1,
+				 Head);
 	    break;
 	  case '*': ivl
-	      = mode_A_variable (cDataBuffer,
-				 cDataBuffer+DataSection+1,
-				 Data);
+	      = mode_A_variable (cHeadBuffer,
+				 cHeadBuffer+HeadSection+1,
+				 Head);
 	    break;
 	  default : break;
 	  }
-	convert (Result, ivl);
+	convert (Data, ivl);
       }
-    else if ("U" == Data.Mode)
+    else if ("U" == Head.Mode)
       { // histograms of ranged-size(???)
 	throw uncorrelated_mode ();
       }
-    else if ("C" == Data.Mode)
+    else if ("C" == Head.Mode)
       { // histograms of ranged-size(???)
 	throw correlated_mode ();
       }
 
-    return std::make_pair (Data, Result);
+    return fcs;
   }
 
 }
