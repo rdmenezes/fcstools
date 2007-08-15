@@ -102,7 +102,7 @@ int main (int argc, char *argv[])
 	    }
 	}
     }
-  catch (fcs_error err)
+  catch (fcs_error const& err)
     {
       std::cout << "Error reading file: " << err.what () << std::endl;
     }

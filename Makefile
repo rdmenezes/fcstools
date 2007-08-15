@@ -1,6 +1,6 @@
-all: Info Convert
+all: Info Convert Test
 
-FCS2: testFCS.cpp FCSIO.hpp
+Test: testFCS.cpp FCSIO.hpp
 	g++ testFCS.cpp -O3 -o fcstest
 
 Info: FCSIO.hpp FCSInfo.cpp
