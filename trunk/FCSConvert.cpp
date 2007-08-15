@@ -56,6 +56,52 @@ int main (int argc, char *argv[])
 	  return 1;
 	}
     }
+  else if ("split" == Command)
+    {
+      // fcsconvert split file
+      if (3 != args.size ())
+	{
+	  std::cout << "Not enough parameters." << std::endl;
+	  return 1;
+	}
+      std::fstream fcsfile (args[2].c_str (), std::ios::in|std::ios::binary);
+      if (! fcsfile)
+	{
+	  std::cout << "Could not open the file \"" << args[2] << "\"" << std::endl;
+	  return 1;
+	}
+      try
+	{
+	  FCSTools::FCS<std::size_t> fcs = FCSTools::Reader<std::size_t> (fcsfile);
+	  for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+	    {
+	      FCSTools::FCS<std::size_t> split;
+	      split.Head = fcs.Head;
+	      split.Head.Parameter.clear ();
+	      split.Head.Parameter.push_back (fcs.Head.Parameter[i]);
+	      for (std::size_t j=0; j<fcs.Data.size (); ++j)
+		split.Data.push_back (std::vector<std::size_t>(1, fcs.Data[j][i]));
+	      std::stringstream ssidx;
+	      ssidx << (i+1);
+	      std::fstream ofcs((ssidx.str () + "---"
+				 + fcs.Head.Parameter[i].Name
+				 + ".fcs2").c_str (),
+				std::ios::out|std::ios::binary);
+	      if (! ofcs)
+		{
+		  std::cout << "Failed to open file associated with column number "
+			    << (i+1) << std::endl;
+		  continue;
+		}
+	      FCSTools::Writer (ofcs, split);
+	    }
+	}
+      catch (FCSTools::fcs_error ferr)
+	{
+	  std::cout << ferr.what () << std::endl;
+	  return 1;
+	}
+    }
   else if ("datatype" == Command ||
 	   "width" == Command ||
 	   "trunc" == Command)
@@ -245,7 +291,7 @@ void show_help ()
 {
   std::cout << "fcsconvert command files... [out filename]" << std::endl;
   std::cout << "\tWhere command is one of: merge, cat, "
-	    << "datatype, width, trunc, resample;" << std::endl
+	    << "datatype, width, trunc, resample, split;" << std::endl
 	    << "\tand \"files...\" is a list of files;" << std::endl
 	    << "\tand \'filename\' is the name of the output file." << std::endl;
   std::cout << std::endl;
@@ -258,6 +304,11 @@ void show_help ()
 	    << "\t  append the files into a single file called" << std::endl
 	    << "\t  \'filename\' only if they have the same number" << std::endl
 	    << "\t  of rows." << std::endl;
+  std::cout << std::endl;
+  std::cout << "\tsplit file" << std::endl
+	    << "\t  Splits the file into new files, where each" << std::endl
+	    << "\t  is a column from the input file. Files are" << std::endl
+	    << "\t  named sequentially." << std::endl;
   std::cout << std::endl;
   std::cout << "\tdatatype Type file out filename" << std::endl
 	    << "\t ... or ..." << std::endl
