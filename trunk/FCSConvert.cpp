@@ -58,17 +58,150 @@ int main (int argc, char *argv[])
 	  return 1;
 	}
     }
-  else if ("datatype" == Command || "datatype!" == Command)
+  else if ("datatype" == Command ||
+	   "width" == Command ||
+	   "trunc" == Command)
     {
+      // fcsconvert command parameter file out filename
+      if (6 != args.size ())
+	{
+	  std::cout << "Not enough parameters." << std::endl;
+	  return 1;
+	}
+      std::string Parameter = args[2];
+      std::string InFN = args[3];
+      std::string OutFN = args[5];
+      std::fstream fcsfile (InFN.c_str (), std::ios::in|std::ios::binary);
+      if (! fcsfile)
+	{
+	  std::cout << "Could not open the file \"" << InFN << "\"" << std::endl;
+	  return 1;
+	}
+      try
+	{
+	  FCSTools::FCS<std::size_t> fcs = FCSTools::Reader<std::size_t> (fcsfile);
+	  if ("datatype" == Command)
+	    {
+	      if ("Integer" == Parameter)
+		{
+		  fcs.Head.Datatype = "I";
+		  for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+		    fcs.Head.Parameter[i].BitSize =
+		      sizeof(FCSTools::blessed_integral)
+		      * FCSTools::DEFACTO_BYTEL;
+		}
+	      else if ("ASCII" == Parameter)
+		{
+		  fcs.Head.Datatype = "*";
+		}
+	      else
+		{
+		  std::cout << "Legal parameters are \"Integer\" and \"ASCII\"" << std::endl;
+		  return 1;
+		}
+	    }
+	  else if ("width" == Command)
+	    {
+	      std::size_t Width = FCSTools::convert<std::size_t>(Parameter);
+	      for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+		fcs.Head.Parameter[i].BitSize = Width;
+	    }
+	  else if ("trunc" == Command)
+	    {
+	      signed int Trunc = FCSTools::convert<signed int>(Parameter);
+	      if (Trunc > 0)
+		fcs.Data.erase (fcs.Data.begin (), fcs.Data.begin () + Trunc);
+	      else
+		fcs.Data.erase (fcs.Data.end () - Trunc, fcs.Data.end ());
+	    }
+	  std::fstream outf (OutFN.c_str (), std::ios::out|std::ios::binary);
+	  if (! outf)
+	    {
+	      std::cout << "Could not open the file \"" << OutFN << "\"" << std::endl;
+	      return 1;
+	    }
+	  FCSTools::Writer (outf, fcs);
+	}
+      catch (FCSTools::fcs_error ferr)
+	{
+	  std::cout << ferr.what () << std::endl;
+	  return 1;
+	}
     }
-  else if ("width" == Command || "width!" == Command)
+  else if ("datatype!" == Command ||
+	   "width!" == Command ||
+	   "trunc!" == Command)
     {
-    }
-  else if ("trunc" == Command || "trunc!" == Command)
-    {
-    }
-  else if ("resample" == Command || "resample!" == Command)
-    {
+      // fcsconvert command! parameter files...
+      //   1           2         3       4+
+      if (args.size () < 4)
+	{
+	  std::cout << "Not enough parameters." << std::endl;
+ 	  return 1;
+	}
+      std::string Parameter = args[2];
+      std::vector<std::string> filenames (args.begin () + 2, args.end () - 2);
+      std::string outname = args.back ();
+      std::vector<FCSTools::FCS<std::size_t> > fcses (filenames.size ());
+      if (! open_filenames (fcses, filenames))
+	return 1;
+      try
+	{
+	  if ("datatype" == Command)
+	    {
+	      if ("Integer" == Parameter)
+		{
+		  for (std::size_t fx=0; fx<fcses.size (); ++fx)
+		    {
+		      fcses[fx].Head.Datatype = "I";
+		      for (std::size_t i=0; i<fcses[fx].Head.Parameter.size (); ++i)
+			fcses[fx].Head.Parameter[i].BitSize =
+			  sizeof(FCSTools::blessed_integral)
+			  * FCSTools::DEFACTO_BYTEL;
+		    }
+		}
+	      else if ("ASCII" == Parameter)
+		{
+		  for (std::size_t i=0; i<fcses.size (); ++i)
+		    fcses[i].Head.Datatype = "*";
+		}
+	      else
+		{
+		  std::cout << "Legal parameters are \"Integer\" and \"ASCII\"" << std::endl;
+		  return 1;
+		}
+	    }
+	  else if ("width" == Command)
+	    {
+	      std::size_t Width = FCSTools::convert<std::size_t>(Parameter);
+	      for (std::size_t fx=0; fx<fcses.size (); ++fx)
+		for (std::size_t i=0; i<fcses[fx].Head.Parameter.size (); ++i)
+		  fcses[fx].Head.Parameter[i].BitSize = Width;
+	    }
+	  else if ("trunc" == Command)
+	    {
+	      signed int Trunc = FCSTools::convert<signed int>(Parameter);
+	      for (std::size_t i=0; i<fcses.size (); ++i)
+		if (Trunc > 0)
+		  fcses[i].Data.erase (fcses[i].Data.begin (), fcses[i].Data.begin () + Trunc);
+		else
+		  fcses[i].Data.erase (fcses[i].Data.end () - Trunc, fcses[i].Data.end ());
+	    }
+	  for (std::size_t i=0; i<fcses.size (); ++i)
+	    {
+	      std::fstream outf (filenames[i].c_str (), std::ios::out|std::ios::binary);
+	      if (! outf)
+		{
+		  std::cout << "Could not open the file \"" << filenames[i] << "\"" << std::endl;
+		  FCSTools::Writer (outf, fcses[i]);
+		}
+	    }
+	}
+      catch (FCSTools::fcs_error ferr)
+	{
+	  std::cout << ferr.what () << std::endl;
+	  return 1;
+	}
     }
   else
     show_help ();
@@ -122,8 +255,8 @@ void show_help ()
   std::cout << "\tdatatype Type file out filename" << std::endl
 	    << "\t ... or ..." << std::endl
 	    << "\tdatatype! Type files..." << std::endl
-	    << "\t  Change the Datatype to either Integer" << std::endl
-	    << "\t  or ASCII (variable). The first form" << std::endl
+	    << "\t  Change the Datatype to either \'Integer\'" << std::endl
+	    << "\t  or \'ASCII\' (variable). The first form" << std::endl
 	    << "\t  saves to the file named \'filename\' and" << std::endl
 	    << "\t  the second form saves in place." << std::endl;
   std::cout << std::endl;
