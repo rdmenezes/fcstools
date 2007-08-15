@@ -86,9 +86,12 @@ int main (int argc, char *argv[])
 	    std::cout << std::setw (10) << fcs.Data[i][j];
 	  std::cout << std::endl;
 	}
-      for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
-	std::cout << std::setw(10) << "...";
-      std::cout << std::endl;
+      if (fcs.Data.size () > 6)
+	{
+	  for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+	    std::cout << std::setw(10) << "...";
+	  std::cout << std::endl;
+	}
       std::size_t DataSz = fcs.Data.size ();
       for (signed int i=SecondHalf; i>0; --i)
 	{
