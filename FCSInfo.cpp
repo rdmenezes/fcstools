@@ -36,37 +36,34 @@ int main (int argc, char *argv[])
     {
       FCS<std::size_t> fcs
 	= Reader<std::size_t> (file, flags["--compliant-mode"]);
-      std::cout << "Name:      " << argv[1] << std::endl
-		<< "Events:    " << fcs.Data.size () << std::endl
-		<< "Mode:      " << fcs.Head.Mode << std::endl
-		<< "Datatype:  " << fcs.Head.Datatype << std::endl << std::endl
-		<< "Column Information" << std::endl << std::endl;
+      std::cout << "Name:        " << argv[1] << std::endl
+		<< "Events:      " << fcs.Data.size () << std::endl
+		<< "Mode:        " << fcs.Head.Mode << std::endl
+		<< "Datatype:    " << fcs.Head.Datatype << std::endl;
       if (flags["--extended-information"])
 	{
-	  std::cout << "Byte Order:";
+	  std::cout << "Byte Order: ";
 	  for (std::size_t i=0; i<fcs.Head.ByteOrder.size (); ++i)
 	    std::cout << (0==i?" ":", ") << (fcs.Head.ByteOrder[i]+1);
 	  std::cout << std::endl;
-	  std::cout << "Nextdata:   ???" << std::endl;
+	  std::cout << "Nextdata:    " << fcs.Head.AllKeywords["$NEXTDATA"] << std::endl;
 	}
+      std::cout << std::endl
+		<< "Column Information" << std::endl << std::endl;
       for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
 	{
-	  std::cout << std::setw(3) << (i+1) << ")"
-		    << "  Name:          " 
-		    << std::setw(30) << fcs.Head.Parameter[i].Name
-		    << "  BitSize:       "
-		    << std::setw(4) << fcs.Head.Parameter[i].BitSize
-		    << "  Range:         "
-		    << std::setw(9) << fcs.Head.Parameter[i].Range << std::endl;
+	  std::cout << fcs.Head.Parameter[i].Name << std::endl
+		    << std::right << std::setw (12) << "BitSize: "
+		    << fcs.Head.Parameter[i].BitSize << std::endl
+		    << std::right << std::setw (12) << "Range: "
+		    << fcs.Head.Parameter[i].Range << std::endl;
 	  if (! flags["--extended-information"])
 	    continue;
-	  std::cout << "      Exponent:      ";
-	  std::stringstream ssExp;
-	  ssExp << fcs.Head.Parameter[i].Exponent.first
-		<< ", " << fcs.Head.Parameter[i].Exponent.second;
-	  std::cout << std::setw(30) << ssExp.str ()
-		    << "  Specification: "
-		    << std::setw(12) << fcs.Head.Parameter[i].Specification
+	  std::cout << std::right << std::setw (12) << "Exponent: "
+		    << fcs.Head.Parameter[i].Exponent.first 
+		    << ", " << fcs.Head.Parameter[i].Exponent.second << std::endl
+		    << std::right << std::setw (12) << "Spec.: "
+		    << fcs.Head.Parameter[i].Specification << std::endl
 		    << std::endl;
 	}
       std::size_t SomeData = (6>fcs.Data.size ()?fcs.Data.size ():6);
