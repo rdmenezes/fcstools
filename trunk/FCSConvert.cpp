@@ -107,6 +107,9 @@ int main (int argc, char *argv[])
 	  else if ("trunc" == Command)
 	    {
 	      signed int Trunc = FCSTools::convert<signed int>(Parameter);
+	      std::size_t aTrunc = std::abs (Trunc);
+	      if (aTrunc > fcs.Data.size ())
+		aTrunc = fcs.Data.size ();
 	      if (Trunc > 0)
 		fcs.Data.erase (fcs.Data.begin (), fcs.Data.begin () + Trunc);
 	      else
@@ -138,14 +141,14 @@ int main (int argc, char *argv[])
  	  return 1;
 	}
       std::string Parameter = args[2];
-      std::vector<std::string> filenames (args.begin () + 2, args.end () - 2);
+      std::vector<std::string> filenames (args.begin () + 3, args.end ());
       std::string outname = args.back ();
       std::vector<FCSTools::FCS<std::size_t> > fcses (filenames.size ());
       if (! open_filenames (fcses, filenames))
 	return 1;
       try
 	{
-	  if ("datatype" == Command)
+	  if ("datatype!" == Command)
 	    {
 	      if ("Integer" == Parameter)
 		{
@@ -169,21 +172,26 @@ int main (int argc, char *argv[])
 		  return 1;
 		}
 	    }
-	  else if ("width" == Command)
+	  else if ("width!" == Command)
 	    {
 	      std::size_t Width = FCSTools::convert<std::size_t>(Parameter);
 	      for (std::size_t fx=0; fx<fcses.size (); ++fx)
 		for (std::size_t i=0; i<fcses[fx].Head.Parameter.size (); ++i)
 		  fcses[fx].Head.Parameter[i].BitSize = Width;
 	    }
-	  else if ("trunc" == Command)
+	  else if ("trunc!" == Command)
 	    {
 	      signed int Trunc = FCSTools::convert<signed int>(Parameter);
 	      for (std::size_t i=0; i<fcses.size (); ++i)
-		if (Trunc > 0)
-		  fcses[i].Data.erase (fcses[i].Data.begin (), fcses[i].Data.begin () + Trunc);
-		else
-		  fcses[i].Data.erase (fcses[i].Data.end () - Trunc, fcses[i].Data.end ());
+		{
+		  std::size_t aTrunc = std::abs (Trunc);
+		  if (aTrunc > fcses[i].Data.size ())
+		    aTrunc = fcses[i].Data.size ();
+		  if (Trunc > 0)
+		    fcses[i].Data.erase (fcses[i].Data.begin (), fcses[i].Data.begin () + aTrunc);
+		  else
+		    fcses[i].Data.erase (fcses[i].Data.end () - aTrunc, fcses[i].Data.end ());
+		}
 	    }
 	  for (std::size_t i=0; i<fcses.size (); ++i)
 	    {
@@ -191,8 +199,9 @@ int main (int argc, char *argv[])
 	      if (! outf)
 		{
 		  std::cout << "Could not open the file \"" << filenames[i] << "\"" << std::endl;
-		  FCSTools::Writer (outf, fcses[i]);
+		  continue;
 		}
+	      FCSTools::Writer (outf, fcses[i]);
 	    }
 	}
       catch (FCSTools::fcs_error ferr)
