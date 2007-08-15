@@ -50,7 +50,7 @@ int main (int argc, char *argv[])
 	  std::fstream output (outname.c_str (), std::ios::out|std::ios::binary);
 	  FCSTools::Writer (output, result);
 	}
-      catch (FCSTools::fcs_error ferr)
+      catch (FCSTools::fcs_error const& ferr)
 	{
 	  std::cout << ferr.what () << std::endl;
 	  return 1;
@@ -96,7 +96,7 @@ int main (int argc, char *argv[])
 	      FCSTools::Writer (ofcs, split);
 	    }
 	}
-      catch (FCSTools::fcs_error ferr)
+      catch (FCSTools::fcs_error const& ferr)
 	{
 	  std::cout << ferr.what () << std::endl;
 	  return 1;
@@ -169,7 +169,7 @@ int main (int argc, char *argv[])
 	    }
 	  FCSTools::Writer (outf, fcs);
 	}
-      catch (FCSTools::fcs_error ferr)
+      catch (FCSTools::fcs_error const& ferr)
 	{
 	  std::cout << ferr.what () << std::endl;
 	  return 1;
@@ -234,9 +234,11 @@ int main (int argc, char *argv[])
 		  if (aTrunc > fcses[i].Data.size ())
 		    aTrunc = fcses[i].Data.size ();
 		  if (Trunc > 0)
-		    fcses[i].Data.erase (fcses[i].Data.begin (), fcses[i].Data.begin () + aTrunc);
+		    fcses[i].Data.erase (fcses[i].Data.begin (),
+					 fcses[i].Data.begin () + aTrunc);
 		  else
-		    fcses[i].Data.erase (fcses[i].Data.end () - aTrunc, fcses[i].Data.end ());
+		    fcses[i].Data.erase (fcses[i].Data.end () - aTrunc, 
+					 fcses[i].Data.end ());
 		}
 	    }
 	  for (std::size_t i=0; i<fcses.size (); ++i)
@@ -244,13 +246,14 @@ int main (int argc, char *argv[])
 	      std::fstream outf (filenames[i].c_str (), std::ios::out|std::ios::binary);
 	      if (! outf)
 		{
-		  std::cout << "Could not open the file \"" << filenames[i] << "\"" << std::endl;
+		  std::cout << "Could not open the file \"" << filenames[i]
+			    << "\"" << std::endl;
 		  continue;
 		}
 	      FCSTools::Writer (outf, fcses[i]);
 	    }
 	}
-      catch (FCSTools::fcs_error ferr)
+      catch (FCSTools::fcs_error const& ferr)
 	{
 	  std::cout << ferr.what () << std::endl;
 	  return 1;
@@ -270,7 +273,8 @@ bool open_filenames (std::vector<FCSTools::FCS<std::size_t> >& fcses,
       std::fstream fs (filenames[i].c_str (), std::ios::in|std::ios::binary);
       if (! fs)
 	{
-	  std::cout << "Could not open the file named \"" << filenames[i] << "\"!" << std::endl;
+	  std::cout << "Could not open the file named \"" 
+		    << filenames[i] << "\"!" << std::endl;
 	  return false;
 	}
       try
@@ -278,7 +282,7 @@ bool open_filenames (std::vector<FCSTools::FCS<std::size_t> >& fcses,
 	  FCSTools::FCS<std::size_t> fcs = FCSTools::Reader<std::size_t> (fs);
 	  fcses[i] = fcs;
 	}
-      catch (FCSTools::fcs_error ferr)
+      catch (FCSTools::fcs_error const& ferr)
 	{
 	  std::cout << ferr.what () << std::endl;
 	  return false;

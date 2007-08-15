@@ -1,5 +1,5 @@
 #include<fstream>
-#include"FCS2.hpp"
+#include"FCSIO.hpp"
 
 
 int main (int argc, char *argv[])

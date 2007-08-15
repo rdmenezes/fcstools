@@ -17,7 +17,10 @@ namespace FCSTools
   static const std::size_t DEFACTO_BYTEL = 8;
 
   // ERROR MESSAGES
-  struct fcs_error : std::exception {};
+  struct fcs_error : std::exception {
+    virtual const char* what () const throw () {
+      return "FCS Error";}
+  };
   struct no_keyword : fcs_error {};
   struct no_keyword_fatal : no_keyword {};
   template <typename Base>
@@ -33,6 +36,19 @@ namespace FCSTools
       return "Invalid datatype"; }
   };
   
+  struct unsupported_fcs_format : fcs_error {
+    virtual const char* what () const throw () {
+      return "Unsupported FCS format";}
+  };
+  struct text_miscalculation_error : fcs_error {
+    virtual const char* what () const throw () {
+      return "Position of text portion of FCS file unknown";}
+  };
+  struct data_miscalculation_error : fcs_error {
+    virtual const char* what () const throw () {
+      return "Position of data portion of FCS file unknown";}
+  };
+
   struct invalid_bit_length : fcs_error {
     virtual const char* what () const throw () {
       return "Invalid bit length for parameter"; }
@@ -470,13 +486,22 @@ namespace FCSTools
 
     std::string FCSKind;
     std::size_t KeysBegin, KeysEnd, KeySection, DataBegin, DataEnd, DataSection;
-    //FCSFile >> FCSKind >> KeysBegin >> KeysEnd >> DataBegin >> DataEnd;
+    FCSFile >> FCSKind;
+
+    double Kind = 0.0;
+
+    if ("FCS2.0" == FCSKind)
+      Kind = 2.0;
+    else if ("FCS3.0" == FCSKind)
+      Kind = 3.0;
+
     // Want any teeth pulled?
     const std::size_t KindLength = 10;
     const std::size_t LocationSize = 8;
     const std::size_t NumberLocations = 4;
     const std::size_t HeaderLength = KindLength + LocationSize * NumberLocations;
     char DumbBuffer[128];
+    FCSFile.seekg (0);
     FCSFile.read (DumbBuffer, KindLength * LocationSize * NumberLocations);
     DumbBuffer[HeaderLength] = 0;
 
@@ -490,13 +515,13 @@ namespace FCSTools
       }
     ssLocations >> KeysBegin >> KeysEnd >> DataBegin >> DataEnd;
 
-    if ("FCS2.0" != FCSKind.substr(0,6))
-      throw fcs_error (); // fuckers
+    if (2.0 != Kind && 3.0 != Kind)
+      throw unsupported_fcs_format ();
 
     if (KeysEnd < KeysBegin)
-      throw fcs_error ();
+      throw text_miscalculation_error ();
     if (DataEnd < DataBegin)
-      throw fcs_error ();
+      throw data_miscalculation_error ();
 
     // Lengths of the various sections
     KeySection = KeysEnd - KeysBegin + 1;
@@ -669,7 +694,7 @@ namespace FCSTools
 	  if (Head.ByteOrder[j] < (Head.Parameter[i].BitSize/DEFACTO_BYTEL))
 	    Head.Parameter[i].ByteOrder.push_back (Head.ByteOrder[j]);
       }
-    
+
     // Why? is this some lame attempt at redundancy checking?
     // Idiocy.
     if (Head.has_keyword ("$TOT"))
