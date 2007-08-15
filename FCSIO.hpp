@@ -368,19 +368,21 @@ namespace FCSTools
 	// width; first we determine if all of the BitSizes are
 	// char-aligned. Then we recreate the byte-length
 	// for each one.
+	std::vector<std::size_t> BitSize (fcs.Head.Parameter.size (),
+					  sizeof(blessed_integral) * DEFACTO_BYTEL);
 	for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
 	  if ((fcs.Head.Parameter[i].BitSize%DEFACTO_BYTEL) != 0)
 	    { // smallest width > than BitSize that -is- char-aligned
 	      std::size_t floor
 		= fcs.Head.Parameter[i].BitSize / DEFACTO_BYTEL;
-	      fcs.Head.Parameter[i].BitSize
+	      BitSize[i]
 		= (floor + 1) * DEFACTO_BYTEL; // i.e. ceil
 	    }
 	std::size_t Cursor = 0;
 	std::vector<std::size_t> ByteLength (fcs.Head.Parameter.size (),
 					     sizeof(blessed_integral));
 	for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
-	  ByteLength[i] = fcs.Head.Parameter[i].BitSize / DEFACTO_BYTEL;
+	  ByteLength[i] = BitSize[i] / DEFACTO_BYTEL;
 	for (std::size_t i=0; i<fcs.Data.size (); ++i)
 	  for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
 	    {

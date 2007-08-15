@@ -1,4 +1,5 @@
-#include"FCS2.hpp"
+#include"FCSIO.hpp"
+#include"FCSTools.hpp"
 #include<fstream>
 #include<sstream>
 #include<map>
@@ -7,8 +8,10 @@
 
 void show_help ();
 
-void open_filenames (std::vector<FCSTools::FCS<std::size_t> >&,
+bool open_filenames (std::vector<FCSTools::FCS<std::size_t> >&,
 		     std::vector<std::string> const& names);
+
+
 
 int main (int argc, char *argv[])
 {
@@ -32,18 +35,32 @@ int main (int argc, char *argv[])
       if (args.size () < 5)
 	{
 	  std::cout << "Not enough parameters." << std::endl;
- 	  return 0;
+ 	  return 1;
 	}
       std::vector<std::string> filenames (args.begin () + 2, args.end () - 2);
       std::string outname = args.back ();
-      std::vector<FCSTools::FCS<std::size_t> > fcses;
+      std::vector<FCSTools::FCS<std::size_t> > fcses (filenames.size ());
+      if (! open_filenames (fcses, filenames))
+	return 1;
+      FCSTools::FCS<std::size_t> result;
+      try
+	{
+	  FCSTools::merge (result, fcses);
+	  std::fstream output (outname.c_str (), std::ios::out|std::ios::binary);
+	  FCSTools::Writer (output, result);
+	}
+      catch (FCSTools::fcs_error ferr)
+	{
+	  std::cout << ferr.what () << std::endl;
+	  return 1;
+	}
     }
 
   return 0;
 }
 
-bool open_filenames (std::vector<FCSTools::FCS<std::size_t> > fcses&,
-		     std::vector<std::string> const& names)
+bool open_filenames (std::vector<FCSTools::FCS<std::size_t> >& fcses,
+		     std::vector<std::string> const& filenames)
 {
   for (std::size_t i=0; i<fcses.size (); ++i)
     {
@@ -56,6 +73,7 @@ bool open_filenames (std::vector<FCSTools::FCS<std::size_t> > fcses&,
       try
 	{
 	  FCSTools::FCS<std::size_t> fcs = FCSTools::Reader<std::size_t> (fs);
+	  fcses[i] = fcs;
 	}
       catch (FCSTools::fcs_error ferr)
 	{
