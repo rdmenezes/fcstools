@@ -28,7 +28,7 @@ int main (int argc, char *argv[])
 
   std::string Command = argv[1];
 
-  if ("merge" == Command)
+  if ("merge" == Command || "cat" == Command)
     {
       // fcsconvert merge file ... file out filename
       //    1        2      3            4    5
@@ -45,7 +45,10 @@ int main (int argc, char *argv[])
       FCSTools::FCS<std::size_t> result;
       try
 	{
-	  FCSTools::merge (result, fcses);
+	  if ("merge" == Command)
+	    FCSTools::merge (result, fcses);
+	  else
+	    FCSTools::cat (result, fcses);
 	  std::fstream output (outname.c_str (), std::ios::out|std::ios::binary);
 	  FCSTools::Writer (output, result);
 	}
@@ -55,6 +58,20 @@ int main (int argc, char *argv[])
 	  return 1;
 	}
     }
+  else if ("datatype" == Command || "datatype!" == Command)
+    {
+    }
+  else if ("width" == Command || "width!" == Command)
+    {
+    }
+  else if ("trunc" == Command || "trunc!" == Command)
+    {
+    }
+  else if ("resample" == Command || "resample!" == Command)
+    {
+    }
+  else
+    show_help ();
 
   return 0;
 }
@@ -88,7 +105,7 @@ void show_help ()
 {
   std::cout << "fcsconvert command files... [out filename]" << std::endl;
   std::cout << "\tWhere command is one of: merge, cat, "
-	    << "\t  datatype, width, trunc, resample;" << std::endl
+	    << "datatype, width, trunc, resample;" << std::endl
 	    << "\tand \"files...\" is a list of files;" << std::endl
 	    << "\tand \'filename\' is the name of the output file." << std::endl;
   std::cout << std::endl;
@@ -99,8 +116,16 @@ void show_help ()
   std::cout << std::endl;
   std::cout << "\tcat files... out filename:" << std::endl
 	    << "\t  append the files into a single file called" << std::endl
-	    << "\t  \'filename\' only if they have the same number"
+	    << "\t  \'filename\' only if they have the same number" << std::endl
 	    << "\t  of rows." << std::endl;
+  std::cout << std::endl;
+  std::cout << "\tdatatype Type file out filename" << std::endl
+	    << "\t ... or ..." << std::endl
+	    << "\tdatatype! Type files..." << std::endl
+	    << "\t  Change the Datatype to either Integer" << std::endl
+	    << "\t  or ASCII (variable). The first form" << std::endl
+	    << "\t  saves to the file named \'filename\' and" << std::endl
+	    << "\t  the second form saves in place." << std::endl;
   std::cout << std::endl;
   std::cout << "\twidth N file out filename" << std::endl
 	    << "\t ... or ..." << std::endl
