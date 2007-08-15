@@ -70,13 +70,6 @@ int main (int argc, char *argv[])
       std::size_t FirstHalf = SomeData / 2;
       std::size_t SecondHalf = SomeData - FirstHalf;
       std::cout << std::endl << "Example Data" << std::endl << std::endl;
-      for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
-	{
-	  std::stringstream col;
-	  col << "(" << (i+1) << ")";
-	  std::cout << std::setw (10) << col.str ();
-	}
-      std::cout << std::endl << std::endl;
       for (std::size_t i=0; i<FirstHalf; ++i)
 	{
 	  for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
