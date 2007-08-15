@@ -2,7 +2,7 @@
 #include<string>
 #include<map>
 #include<iomanip>
-#include"FCS2.hpp"
+#include"FCSIO.hpp"
 
 void show_help ();
 
