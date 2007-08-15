@@ -34,7 +34,8 @@ int main (int argc, char *argv[])
   std::fstream file (argv[1], std::ios::binary|std::ios::in);
   try
     {
-      FCS<std::size_t> fcs = Reader<std::size_t> (file, flags["--compliant-mode"]);
+      FCS<std::size_t> fcs
+	= Reader<std::size_t> (file, flags["--compliant-mode"]);
       std::cout << "Name:      " << argv[1] << std::endl
 		<< "Events:    " << fcs.Data.size () << std::endl
 		<< "Mode:      " << fcs.Head.Mode << std::endl
@@ -50,18 +51,25 @@ int main (int argc, char *argv[])
 	}
       for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
 	{
-	  std::cout << "Column (" << (i+1) << ")" << std::endl
-		    << "  Name:          " << fcs.Head.Parameter[i].Name << std::endl
-		    << "  BitSize:       " << fcs.Head.Parameter[i].BitSize << std::endl
-		    << "  Range:         " << fcs.Head.Parameter[i].Range << std::endl;
+	  std::cout << std::setw(3) << (i+1) << ")"
+		    << "  Name:          " 
+		    << fcs.Head.Parameter[i].Name
+		    << "  BitSize:       "
+		    << fcs.Head.Parameter[i].BitSize
+		    << "  Range:         "
+		    << fcs.Head.Parameter[i].Range << std::endl;
 	  if (! flags["--extended-information"])
 	    continue;
-	  std::cout << "  Exponent:      " << fcs.Head.Parameter[i].Exponent.first
-		    << ", " << fcs.Head.Parameter[i].Exponent.second << std::endl
-		    << "  Specification: " << fcs.Head.Parameter[i].Specification
+	  std::cout << "      Exponent:      "
+		    << fcs.Head.Parameter[i].Exponent.first
+		    << ", " << fcs.Head.Parameter[i].Exponent.second
+		    << "  Specification: "
+		    << fcs.Head.Parameter[i].Specification
 		    << std::endl;
 	}
-      std::size_t SomeData = (5>fcs.Data.size ()?fcs.Data.size ():5);
+      std::size_t SomeData = (6>fcs.Data.size ()?fcs.Data.size ():6);
+      std::size_t FirstHalf = SomeData / 2;
+      std::size_t SecondHalf = SomeData - FirstHalf;
       std::cout << std::endl << "Example Data" << std::endl << std::endl;
       for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
 	{
@@ -70,10 +78,20 @@ int main (int argc, char *argv[])
 	  std::cout << std::setw (10) << col.str ();
 	}
       std::cout << std::endl << std::endl;
-      for (std::size_t i=0; i<SomeData; ++i)
+      for (std::size_t i=0; i<FirstHalf; ++i)
 	{
 	  for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
 	    std::cout << std::setw (10) << fcs.Data[i][j];
+	  std::cout << std::endl;
+	}
+      for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+	std::cout << std::setw(10) << "...";
+      std::cout << std::endl;
+      std::size_t DataSz = fcs.Data.size ();
+      for (signed int i=SecondHalf; i>0; --i)
+	{
+	  for (std::size_t j=0; j<fcs.Data[DataSz-i].size (); ++j)
+	    std::cout << std::setw (10) << fcs.Data[DataSz-i][j];
 	  std::cout << std::endl;
 	}
     }
