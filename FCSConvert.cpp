@@ -5,6 +5,7 @@
 #include<map>
 #include<iostream>
 #include<string>
+#include<set>
 
 void show_help ();
 
@@ -140,7 +141,8 @@ int main (int argc, char *argv[])
 		}
 	      else
 		{
-		  std::cout << "Legal parameters are \"Integer\" and \"ASCII\"" << std::endl;
+		  std::cout << "Legal parameters are \"Integer\" and \"ASCII\""
+			    << std::endl;
 		  return 1;
 		}
 	    }
@@ -214,7 +216,8 @@ int main (int argc, char *argv[])
 		}
 	      else
 		{
-		  std::cout << "Legal parameters are \"Integer\" and \"ASCII\"" << std::endl;
+		  std::cout << "Legal parameters are \"Integer\" and \"ASCII\""
+			    << std::endl;
 		  return 1;
 		}
 	    }
@@ -259,6 +262,66 @@ int main (int argc, char *argv[])
 	  return 1;
 	}
     }
+  else if ("erase" == Command)
+    {
+      // fcsconvert erase file out filename columns N...
+      //     1        2    3    4     5       6      7+
+      if (7 > args.size ())
+	{
+	  std::cout << "Not enough parameters." << std::endl;
+	  return 1;
+	}
+      std::fstream fcsfile (args[2].c_str (), std::ios::in|std::ios::binary);
+      if (! fcsfile)
+	{
+	  std::cout << "Unable to open the file \"" << args[2] << "\"" << std::endl;
+	  return 1;
+	}
+      if ("out" != args[3])
+	{
+	  std::cout << "This argument should be \"out\"" << std::endl;
+	  return 1;
+	}
+      if ("columns" != args[5])
+	{
+	  std::cout << "This argument should be \"columns\"" << std::endl;
+	  return 1;
+	}
+      std::vector<std::size_t> columns;
+      for (std::size_t i=6; i<args.size (); ++i)
+	columns.push_back (FCSTools::convert<std::size_t>(args[i]));
+      std::set<std::size_t> Columns (columns.begin (), columns.end ());
+      try
+	{
+	  FCSTools::FCS<std::size_t> fcs = FCSTools::Reader<std::size_t> (fcsfile);
+
+	  FCSTools::NData Parameter;
+	  for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+	    if (Columns.end () == Columns.find (i+1))
+	      Parameter.push_back (fcs.Head.Parameter[i]);
+	  fcs.Head.Parameter = Parameter;
+
+	  std::vector< std::vector<std::size_t> > Data (fcs.Data.size ());
+	  for (std::size_t i=0; i<fcs.Data.size (); ++i)
+	    for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
+	      if (Columns.end () == Columns.find (j+1))
+		Data[i].push_back (fcs.Data[i][j]);
+	  fcs.Data = Data;
+
+	  std::fstream ofcs (args[4].c_str (), std::ios::out|std::ios::binary);
+	  if (! ofcs)
+	    {
+	      std::cout << "Unable to open file \"" << args[4] << "\"" << std::endl;
+	      return 1;
+	    }
+	  FCSTools::Writer (ofcs, fcs);
+	}
+      catch (FCSTools::fcs_error const& ferr)
+	{
+	  std::cout << ferr.what () << std::endl;
+	  return 1;
+	}
+    }
   else
     show_help ();
 
@@ -295,16 +358,16 @@ void show_help ()
 {
   std::cout << "fcsconvert command files... [out filename]" << std::endl;
   std::cout << "\tWhere command is one of: merge, cat, "
-	    << "datatype, width, trunc, resample, split;" << std::endl
+	    << "datatype, width, trunc, resample, split, erase;" << std::endl
 	    << "\tand \"files...\" is a list of files;" << std::endl
 	    << "\tand \'filename\' is the name of the output file." << std::endl;
   std::cout << std::endl;
-  std::cout << "\tmerge files... out filename:" << std::endl
+  std::cout << "\tmerge files... out filename" << std::endl
 	    << "\t  add the columns of the files into a single" << std::endl
 	    << "\t  file whose name is \'filename\' only if" << std::endl
 	    << "\t  the columns are the same length." << std::endl;
   std::cout << std::endl;
-  std::cout << "\tcat files... out filename:" << std::endl
+  std::cout << "\tcat files... out filename" << std::endl
 	    << "\t  append the files into a single file called" << std::endl
 	    << "\t  \'filename\' only if they have the same number" << std::endl
 	    << "\t  of rows." << std::endl;
@@ -313,6 +376,9 @@ void show_help ()
 	    << "\t  Splits the file into new files, where each" << std::endl
 	    << "\t  is a column from the input file. Files are" << std::endl
 	    << "\t  named sequentially." << std::endl;
+  std::cout << "\terase file out filename columns N..." << std::endl
+	    << "\t  Erases the columns numbers (\"N...\") from" << std::endl
+	    << "\t  the file." << std::endl;
   std::cout << std::endl;
   std::cout << "\tdatatype Type file out filename" << std::endl
 	    << "\t ... or ..." << std::endl
