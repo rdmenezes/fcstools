@@ -470,20 +470,29 @@ namespace FCSTools
     if ("FCS2.0" != FCSKind.substr(0,6))
       throw fcs_error (); // fuckers
 
+    std::cout << KeysEnd << " " << KeysBegin << std::endl;
+
     // Lengths of the various sections
     KeySection = KeysEnd - KeysBegin + 1;
     DataSection = DataEnd - DataBegin + 1;
     
     FCSFile.seekg (KeysBegin);
     
+    std::cout << "HERE(2.1)" << std::endl;
+
     // Now we get the key/value pairs; they
     // are delimited by the first character in the
     // `Text' section. I don't know why.
     char Delimiter = (char)FCSFile.peek ();
     char cKeyWordBuffer[KeySection+2];
+
+    std::cout << "HERE(2.2) "  << " " << KeySection << std::endl;
+
     FCSFile.get (cKeyWordBuffer, KeySection+1, 0);
     std::string KeyWordBuffer (cKeyWordBuffer+1, KeySection+1);
-    
+
+    std::cout << "HERE(3)" << std::endl;    
+
     std::stringstream ss (KeyWordBuffer);
     do
       {
