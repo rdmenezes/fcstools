@@ -13,6 +13,9 @@
 namespace FCSTools
 {
 
+  // de factor byte-length in bits
+  static const std::size_t DEFACTO_BYTEL = 8;
+
   // ERROR MESSAGES
   struct fcs_error : std::exception {};
   struct no_keyword : fcs_error {};
@@ -214,26 +217,27 @@ namespace FCSTools
     // the stream and multiply it by the appropriate scale.
     // For instance, if the byte-order is: 1342 then we
     // scale the first byte by `1', the second byte by
-    // 2^(CHAR_BIT*2) {e.g. 256*256}, the third byte by
-    // 2^(CHAR_BIT*3) {e.g. 256^3}, and the fourth byte
-    // by 2^CHAR_BIT {e.g. 256}
+    // 2^(DEFACTO_BYTEL*2) {e.g. 256*256}, the third byte by
+    // 2^(DEFACTO_BYTEL*3) {e.g. 256^3}, and the fourth byte
+    // by 2^DEFACTO_BYTEL {e.g. 256}
     // This computes those values.
     for (std::size_t i=0; i<bordsz; ++i)
       {
 	for (std::size_t j=0; j<Data.Parameter[i].ByteOrder.size (); ++j)
-	  nByteOrders[i].push_back (1<<(Data.Parameter[i].ByteOrder[j]*CHAR_BIT));
-	veclength += (Data.Parameter[i].BitSize / CHAR_BIT);
+	  nByteOrders[i].push_back (1 << (Data.Parameter[i].ByteOrder[j]
+					  * DEFACTO_BYTEL));
+	veclength += (Data.Parameter[i].BitSize / DEFACTO_BYTEL);
       }
-
     
     // The number of elements, this will agree with
     // $TOT if all goes well
     const std::size_t nElements = (cEnd-cData) / veclength;
-    
+
     // Acquire the data; terminate when we have
     // all of the data
     integral_vector_list_t ivl (nElements);
     std::size_t element = 0;
+
     while (element < nElements)
       {
 	integral_vector_t iv (bordsz, 0);
@@ -248,7 +252,7 @@ namespace FCSTools
 	ivl[element] = iv;
 	++element;
       }
-     return ivl;
+    return ivl;
   }
   
   // ASCII data (variable length) in List mode is similar
@@ -360,10 +364,23 @@ namespace FCSTools
 	Data[i] = VariableString[i];
     else if ("I" == fcs.Head.Datatype)
       {
-	// we ignore the user's request for both
-	// data-width and byte-order and do it *our* way
+	// Now we figure out how to write the data in the proper
+	// width; first we determine if all of the BitSizes are
+	// char-aligned. Then we recreate the byte-length
+	// for each one.
+	for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+	  if ((fcs.Head.Parameter[i].BitSize%DEFACTO_BYTEL) != 0)
+	    { // smallest width > than BitSize that -is- char-aligned
+	      std::size_t floor
+		= fcs.Head.Parameter[i].BitSize / DEFACTO_BYTEL;
+	      fcs.Head.Parameter[i].BitSize
+		= (floor + 1) * DEFACTO_BYTEL; // i.e. ceil
+	    }
 	std::size_t Cursor = 0;
-	const std::size_t ByteLength = sizeof (blessed_integral);
+	std::vector<std::size_t> ByteLength (fcs.Head.Parameter.size (),
+					     sizeof(blessed_integral));
+	for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+	  ByteLength[i] = fcs.Head.Parameter[i].BitSize / DEFACTO_BYTEL;
 	for (std::size_t i=0; i<fcs.Data.size (); ++i)
 	  for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
 	    {
@@ -371,10 +388,10 @@ namespace FCSTools
 	      // we're not going to fuck with clever byte-reording
 	      // we're going to do this algebraically
 	      // it's slower, but guaranteed to be platform independent
-	      for (std::size_t k=0; k<ByteLength; ++k, ++Cursor)
+	      for (std::size_t k=0; k<ByteLength[j]; ++k, ++Cursor)
 		{
-		  const std::size_t Modulus = (1UL<<(CHAR_BIT * (k+1)));
-		  const std::size_t Divisor = (1UL<<(CHAR_BIT * k));
+		  const std::size_t Modulus = (1UL<<(DEFACTO_BYTEL * (k+1)));
+		  const std::size_t Divisor = (1UL<<(DEFACTO_BYTEL * k));
 		  Data[Cursor] = (val % Modulus) / Divisor;
 		}
 	    }
@@ -392,7 +409,7 @@ namespace FCSTools
 
     std::size_t sBitSize;
     if ("I" == fcs.Head.Datatype)
-      sBitSize = sizeof(blessed_integral) * CHAR_BIT;
+      sBitSize = sizeof(blessed_integral) * DEFACTO_BYTEL;
     for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
       {
 	std::size_t N = i+1;
@@ -456,21 +473,28 @@ namespace FCSTools
     const std::size_t KindLength = 10;
     const std::size_t LocationSize = 8;
     const std::size_t NumberLocations = 4;
-    char DumbBuffer[50];
-    FCSFile.read (DumbBuffer, KindLength);
-    FCSKind = DumbBuffer;
+    const std::size_t HeaderLength = KindLength + LocationSize * NumberLocations;
+    char DumbBuffer[128];
+    FCSFile.read (DumbBuffer, KindLength * LocationSize * NumberLocations);
+    DumbBuffer[HeaderLength] = 0;
+
+    FCSKind = std::string (DumbBuffer, DumbBuffer+KindLength);
     std::stringstream ssLocations;
     for (std::size_t i=0; i<NumberLocations; ++i)
       {
-	FCSFile.read (DumbBuffer, LocationSize);
-	ssLocations << DumbBuffer << " ";
+	std::string Loc (DumbBuffer + KindLength + i * LocationSize,
+			 DumbBuffer + KindLength + (i+1) * LocationSize);
+	ssLocations << Loc << " ";
       }
     ssLocations >> KeysBegin >> KeysEnd >> DataBegin >> DataEnd;
 
     if ("FCS2.0" != FCSKind.substr(0,6))
       throw fcs_error (); // fuckers
 
-    std::cout << KeysEnd << " " << KeysBegin << std::endl;
+    if (KeysEnd < KeysBegin)
+      throw fcs_error ();
+    if (DataEnd < DataBegin)
+      throw fcs_error ();
 
     // Lengths of the various sections
     KeySection = KeysEnd - KeysBegin + 1;
@@ -478,20 +502,14 @@ namespace FCSTools
     
     FCSFile.seekg (KeysBegin);
     
-    std::cout << "HERE(2.1)" << std::endl;
-
     // Now we get the key/value pairs; they
     // are delimited by the first character in the
     // `Text' section. I don't know why.
     char Delimiter = (char)FCSFile.peek ();
     char cKeyWordBuffer[KeySection+2];
 
-    std::cout << "HERE(2.2) "  << " " << KeySection << std::endl;
-
     FCSFile.get (cKeyWordBuffer, KeySection+1, 0);
     std::string KeyWordBuffer (cKeyWordBuffer+1, KeySection+1);
-
-    std::cout << "HERE(3)" << std::endl;    
 
     std::stringstream ss (KeyWordBuffer);
     do
@@ -566,7 +584,7 @@ namespace FCSTools
 	else
 	  throw no_bitsize_keyword (npar);
 	// must be byte-aligned to a char
-	if ((Head.Parameter[npar].BitSize%CHAR_BIT) != 0)
+	if ((Head.Parameter[npar].BitSize%DEFACTO_BYTEL) != 0)
 	  throw invalid_bit_length ();
 	par.clear ();
 	par.str ("");
@@ -617,7 +635,7 @@ namespace FCSTools
 	par.clear ();
 	par.str ("");
       }
-    
+
     // Get the permutation of the data. The permutation
     // is delimted by a ','. I suppose, in theory, we
     // could have data that uses enough bytes to require
@@ -646,7 +664,7 @@ namespace FCSTools
     for (std::size_t i=0; i<nParameters; ++i)
       {
 	for (std::size_t j=0; j<Head.ByteOrder.size (); ++j)
-	  if (Head.ByteOrder[j] <= (Head.Parameter[i].BitSize/CHAR_BIT))
+	  if (Head.ByteOrder[j] < (Head.Parameter[i].BitSize/DEFACTO_BYTEL))
 	    Head.Parameter[i].ByteOrder.push_back (Head.ByteOrder[j]);
       }
     
