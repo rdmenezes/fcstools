@@ -53,16 +53,18 @@ int main (int argc, char *argv[])
 	{
 	  std::cout << std::setw(3) << (i+1) << ")"
 		    << "  Name:          " 
-		    << std::setw(12) << fcs.Head.Parameter[i].Name
+		    << std::setw(30) << fcs.Head.Parameter[i].Name
 		    << "  BitSize:       "
-		    << std::setw(12) << fcs.Head.Parameter[i].BitSize
+		    << std::setw(4) << fcs.Head.Parameter[i].BitSize
 		    << "  Range:         "
-		    << std::setw(12) << fcs.Head.Parameter[i].Range << std::endl;
+		    << std::setw(9) << fcs.Head.Parameter[i].Range << std::endl;
 	  if (! flags["--extended-information"])
 	    continue;
-	  std::cout << "      Exponent:      "
-		    << std::setw(12) << fcs.Head.Parameter[i].Exponent.first
-		    << ", " << fcs.Head.Parameter[i].Exponent.second
+	  std::cout << "      Exponent:      ";
+	  std::stringstream ssExp;
+	  ssExp << fcs.Head.Parameter[i].Exponent.first
+		<< ", " << fcs.Head.Parameter[i].Exponent.second;
+	  std::cout << std::setw(30) << ssExp.str ()
 		    << "  Specification: "
 		    << std::setw(12) << fcs.Head.Parameter[i].Specification
 		    << std::endl;
