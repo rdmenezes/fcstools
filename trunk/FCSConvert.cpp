@@ -11,8 +11,6 @@ void show_help ();
 bool open_filenames (std::vector<FCSTools::FCS<std::size_t> >&,
 		     std::vector<std::string> const& names);
 
-
-
 int main (int argc, char *argv[])
 {
 
