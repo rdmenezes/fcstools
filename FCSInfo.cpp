@@ -12,6 +12,7 @@ int main (int argc, char *argv[])
   std::map<std::string,bool> flags;
   flags["--compliant-mode"] = false;
   flags["--extended-information"] = false;
+  flags["--all-data"] = false;
 
   if (2 > argc)
     {
@@ -66,28 +67,39 @@ int main (int argc, char *argv[])
 		    << fcs.Head.Parameter[i].Specification << std::endl
 		    << std::endl;
 	}
-      std::size_t SomeData = (6>fcs.Data.size ()?fcs.Data.size ():6);
-      std::size_t FirstHalf = SomeData / 2;
-      std::size_t SecondHalf = SomeData - FirstHalf;
-      std::cout << std::endl << "Example Data" << std::endl << std::endl;
-      for (std::size_t i=0; i<FirstHalf; ++i)
+      if (flags["--all-data"])
 	{
-	  for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
-	    std::cout << std::setw (10) << fcs.Data[i][j];
-	  std::cout << std::endl;
+	  std::cout << "\nData" << std::endl;
+	  for (std::size_t i=0; i<fcs.Data.size (); ++i)
+	    for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
+	      std::cout << (0==j?"\n":" ") << fcs.Data[i][j];
+	  std::cout << std::flush;
 	}
-      if (fcs.Data.size () > 6)
+      else
 	{
-	  for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
-	    std::cout << std::setw(10) << "...";
-	  std::cout << std::endl;
-	}
-      std::size_t DataSz = fcs.Data.size ();
-      for (signed int i=SecondHalf; i>0; --i)
-	{
-	  for (std::size_t j=0; j<fcs.Data[DataSz-i].size (); ++j)
-	    std::cout << std::setw (10) << fcs.Data[DataSz-i][j];
-	  std::cout << std::endl;
+	  std::size_t SomeData = (6>fcs.Data.size ()?fcs.Data.size ():6);
+	  std::size_t FirstHalf = SomeData / 2;
+	  std::size_t SecondHalf = SomeData - FirstHalf;
+	  std::cout << std::endl << "Example Data" << std::endl << std::endl;
+	  for (std::size_t i=0; i<FirstHalf; ++i)
+	    {
+	      for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
+		std::cout << std::left << std::setw (10) << fcs.Data[i][j];
+	      std::cout << std::endl;
+	    }
+	  if (fcs.Data.size () > 6)
+	    {
+	      for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+		std::cout << std::left << std::setw(10) << "...";
+	      std::cout << std::endl;
+	    }
+	  std::size_t DataSz = fcs.Data.size ();
+	  for (signed int i=SecondHalf; i>0; --i)
+	    {
+	      for (std::size_t j=0; j<fcs.Data[DataSz-i].size (); ++j)
+		std::cout << std::left << std::setw (10) << fcs.Data[DataSz-i][j];
+	      std::cout << std::endl;
+	    }
 	}
     }
   catch (fcs_error err)
@@ -103,5 +115,6 @@ void show_help ()
   std::cout << "fcsinfo file [flags]" << std::endl;
   std::cout << "\tWhere flags are:" << std::endl;
   std::cout << "\t--compliant-mode: force compliancy in reading" << std::endl;
-  std::cout << "\t--extended-information: report extended information" << std::endl; 
+  std::cout << "\t--extended-information: report extended information" << std::endl;
+  std::cout << "\t--all-data: dump all of the data" << std::endl;
 }
