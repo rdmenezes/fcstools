@@ -345,6 +345,11 @@ namespace FCSTools
     // first, compute how long the data is going to be
     std::string VariableString;
     std::size_t DataLength; // <- place here
+
+    // we use our own definition for BitSize
+    std::vector<std::size_t> BitSize (fcs.Head.Parameter.size (),
+				      sizeof(blessed_integral) * DEFACTO_BYTEL);
+
     if ("*" == fcs.Head.Datatype)
       {
 	std::stringstream ss;
@@ -356,11 +361,25 @@ namespace FCSTools
       }
     else if ("I" == fcs.Head.Datatype)
       { // precompute the length
-	// we ignore user pleas for byte-lengths or whatnot
-	DataLength
-	  = sizeof(blessed_integral)
-	  * fcs.Data.size ()
-	  * fcs.Head.Parameter.size ();
+	// Now we figure out how to write the data in the proper
+	// width; first we determine if all of the BitSizes are
+	// char-aligned. Then we recreate the byte-length
+	// for each one.
+	for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+	  if ((fcs.Head.Parameter[i].BitSize%DEFACTO_BYTEL) != 0)
+	    { // smallest width > than BitSize that -is- char-aligned
+	      std::size_t floor
+		= fcs.Head.Parameter[i].BitSize / DEFACTO_BYTEL;
+	      BitSize[i]
+		= (floor + 1) * DEFACTO_BYTEL; // i.e. ceil
+	    }
+	  else
+	    BitSize[i] = fcs.Head.Parameter[i].BitSize;
+	std::size_t DataWidth = 0;
+	for (std::size_t i=0; i<BitSize.size (); ++i)
+	  DataWidth += BitSize[i] / DEFACTO_BYTEL;
+
+	DataLength = DataWidth * fcs.Data.size ();
       }
     else if ("A" == fcs.Head.Datatype)
       throw fixed_ascii_datatype ();
@@ -380,25 +399,13 @@ namespace FCSTools
 	Data[i] = VariableString[i];
     else if ("I" == fcs.Head.Datatype)
       {
-	// Now we figure out how to write the data in the proper
-	// width; first we determine if all of the BitSizes are
-	// char-aligned. Then we recreate the byte-length
-	// for each one.
-	std::vector<std::size_t> BitSize (fcs.Head.Parameter.size (),
-					  sizeof(blessed_integral) * DEFACTO_BYTEL);
-	for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
-	  if ((fcs.Head.Parameter[i].BitSize%DEFACTO_BYTEL) != 0)
-	    { // smallest width > than BitSize that -is- char-aligned
-	      std::size_t floor
-		= fcs.Head.Parameter[i].BitSize / DEFACTO_BYTEL;
-	      BitSize[i]
-		= (floor + 1) * DEFACTO_BYTEL; // i.e. ceil
-	    }
+
 	std::size_t Cursor = 0;
 	std::vector<std::size_t> ByteLength (fcs.Head.Parameter.size (),
 					     sizeof(blessed_integral));
 	for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
 	  ByteLength[i] = BitSize[i] / DEFACTO_BYTEL;
+
 	for (std::size_t i=0; i<fcs.Data.size (); ++i)
 	  for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
 	    {
@@ -432,7 +439,7 @@ namespace FCSTools
       {
 	std::size_t N = i+1;
 	ssKeywords << "/$P" << N << "B/";
-	if (sBitSize > 0) ssKeywords << sBitSize;
+	if (sBitSize > 0) ssKeywords << BitSize[i];
 	else ssKeywords << "*";
 	ssKeywords << "/$P" << N << "R/" << fcs.Head.Parameter[i].Range;
 	if (fcs.Head.Parameter[i].Name.size () > 0)

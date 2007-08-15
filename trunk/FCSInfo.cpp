@@ -72,7 +72,8 @@ int main (int argc, char *argv[])
 	  std::cout << "\nData" << std::endl;
 	  for (std::size_t i=0; i<fcs.Data.size (); ++i)
 	    for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
-	      std::cout << (0==j?"\n":" ") << fcs.Data[i][j];
+	      std::cout << (0==j?"\n":" ") << std::left
+			<< std::setw(13) << fcs.Data[i][j];
 	  std::cout << std::flush;
 	}
       else
@@ -84,20 +85,20 @@ int main (int argc, char *argv[])
 	  for (std::size_t i=0; i<FirstHalf; ++i)
 	    {
 	      for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
-		std::cout << std::left << std::setw (10) << fcs.Data[i][j];
+		std::cout << std::left << std::setw (13) << fcs.Data[i][j];
 	      std::cout << std::endl;
 	    }
 	  if (fcs.Data.size () > 6)
 	    {
 	      for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
-		std::cout << std::left << std::setw(10) << "...";
+		std::cout << std::left << std::setw(13) << "...";
 	      std::cout << std::endl;
 	    }
 	  std::size_t DataSz = fcs.Data.size ();
 	  for (signed int i=SecondHalf; i>0; --i)
 	    {
 	      for (std::size_t j=0; j<fcs.Data[DataSz-i].size (); ++j)
-		std::cout << std::left << std::setw (10) << fcs.Data[DataSz-i][j];
+		std::cout << std::left << std::setw (13) << fcs.Data[DataSz-i][j];
 	      std::cout << std::endl;
 	    }
 	}
