@@ -104,7 +104,7 @@ namespace FCSTools
     return t;
   }
   
-  /* // DEBUGGING UTILITY TO PRINT VECTORS
+  // DEBUGGING UTILITY TO PRINT VECTORS
   template <typename T>
   std::ostream& operator << (std::ostream& ostr, std::vector<T> const& V)
   {
@@ -112,8 +112,7 @@ namespace FCSTools
       ostr << V[i] << " ";
     return ostr;
   }
-  */
-  
+    
   // ByteOrder stores the arbitrary byte-order
   // of the FCS file. 1234 is x86; 4321 is PPC
   // 2143 is Sparc, etc.
@@ -220,8 +219,12 @@ namespace FCSTools
     // by 2^CHAR_BIT {e.g. 256}
     // This computes those values.
     for (std::size_t i=0; i<bordsz; ++i)
-      for (std::size_t j=0; j<Data.Parameter[i].ByteOrder.size (); ++j, ++veclength)
-	nByteOrders[i].push_back (1<<(Data.Parameter[i].ByteOrder[j]*CHAR_BIT));
+      {
+	for (std::size_t j=0; j<Data.Parameter[i].ByteOrder.size (); ++j)
+	  nByteOrders[i].push_back (1<<(Data.Parameter[i].ByteOrder[j]*CHAR_BIT));
+	veclength += (Data.Parameter[i].BitSize / CHAR_BIT);
+      }
+
     
     // The number of elements, this will agree with
     // $TOT if all goes well
@@ -245,7 +248,7 @@ namespace FCSTools
 	ivl[element] = iv;
 	++element;
       }
-    return ivl;
+     return ivl;
   }
   
   // ASCII data (variable length) in List mode is similar
@@ -385,7 +388,7 @@ namespace FCSTools
 	       << "/$MODE/" << fcs.Head.Mode
 	       << "/$BYTEORD";
     for (std::size_t i=0; i<sizeof(blessed_integral); ++i)
-      ssKeywords << (0==i?"/":",") << i;
+      ssKeywords << (0==i?"/":",") << (i+1);
 
     std::size_t sBitSize;
     if ("I" == fcs.Head.Datatype)
@@ -626,15 +629,17 @@ namespace FCSTools
 	  break;
 	Head.ByteOrder.push_back (convert<std::size_t>(byteo)-1);
       }
-    
+   
     // This creates a custom permutation for each parameter;
     // this just trivializes some later computations. What it
     // does is throw away permutation values that are "too big"
     // for our particular value, making look-up trivial.
     for (std::size_t i=0; i<nParameters; ++i)
-      for (std::size_t j=0; j<Head.ByteOrder.size (); ++j)
-	if (Head.ByteOrder[j] < Head.Parameter[i].BitSize/CHAR_BIT)
-	  Head.Parameter[i].ByteOrder.push_back (Head.ByteOrder[j]);
+      {
+	for (std::size_t j=0; j<Head.ByteOrder.size (); ++j)
+	  if (Head.ByteOrder[j] <= (Head.Parameter[i].BitSize/CHAR_BIT))
+	    Head.Parameter[i].ByteOrder.push_back (Head.ByteOrder[j]);
+      }
     
     // Why? is this some lame attempt at redundancy checking?
     // Idiocy.
