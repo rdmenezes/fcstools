@@ -11,3 +11,4 @@ Convert: FCSIO.hpp FCSTools.hpp FCSUtil.hpp FCSConvert.cpp
 
 FCSxToHR: FCSxToHR.cpp FCSTools.hpp FCSUtil.hpp FCSIO.hpp FCSHRIO.hpp
 	g++ FCSxToHR.cpp -O3 -o fcstofchr
+	cp fcstofchr fchrtofcs

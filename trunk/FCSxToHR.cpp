@@ -43,6 +43,10 @@ int main (int argc, char *argv[])
       if (! input)
 	return 2;
       input >> hr;
+
+      std::cout << hr << std::endl;
+      return 0;
+
     }
   catch (FCSTools::fcs_error const& ferr)
     {

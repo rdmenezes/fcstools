@@ -138,7 +138,7 @@ namespace FCSTools
 		{
 		  std::string Name;
 		  std::size_t pos = line.find_first_of (':');
-		  pos = line.find_first_not_of (" \t\v", pos);
+		  pos = line.find_first_not_of (" \t\v", pos+1);
 		  if (std::string::npos != pos)
 		    Name = line.substr (pos, line.size ());
 
@@ -215,6 +215,7 @@ namespace FCSTools
 	      element Element (this->Head.Parameter.size ());
 	      for (std::size_t i=0; i<Element.size (); ++i)
 		ssData >> Element[i];
+	      this->Data.push_back (Element);
 	    }
 	}
     }
