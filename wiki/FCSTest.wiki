@@ -14,7 +14,6 @@ The code for fcstest is trivially short, so we will include it here and describe
 #include<fstream>
 #include"FCSIO.hpp"
 
-
 int main (int argc, char *argv[])
 {
 
