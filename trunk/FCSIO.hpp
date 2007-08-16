@@ -618,21 +618,30 @@ namespace FCSTools
 
     // Go to the Data section; we will read the data in
     // as 4096-byte-pages
-    const std::size_t PageSize = 4096;
     FCSFile.seekg (InitialOffset+DataBegin);
     DataSection = DataEnd - DataBegin + 1;
-    std::vector<unsigned char> DataBuffer (DataSection);
-    std::size_t Chunk = 0;
-    char Buffer[PageSize];
-    while (Chunk < DataSection)
+    std::vector<unsigned char> DataBuffer;
+    if (true)
       {
-	std::size_t GetC = PageSize;
-	if ((Chunk+GetC) > DataSection)
-	  GetC = DataSection - Chunk;
-	FCSFile.read (Buffer, GetC);
-	for (std::size_t i=0; i<GetC; ++i)
-	  DataBuffer[Chunk+i] = Buffer[i];
-	Chunk += PageSize;
+	const std::size_t PageSize = 128000;
+	DataBuffer.reserve (DataSection);
+	std::size_t Chunk = 0;
+	char Buffer[PageSize];
+	while (Chunk < DataSection)
+	  {
+	    std::size_t GetC = PageSize;
+	    if ((Chunk+GetC) > DataSection)
+	      GetC = DataSection - Chunk;
+	    FCSFile.read (Buffer, GetC);
+	    DataBuffer.insert (DataBuffer.end (), Buffer, Buffer+GetC);
+	    Chunk += PageSize;
+	  }
+      }
+    else
+      {
+	char *mBuffer = new char[DataSection];
+	FCSFile.read (mBuffer, DataSection);
+	DataBuffer.insert (DataBuffer.end (), mBuffer, mBuffer+DataSection);
       }
     
     // Pick through and get a bunch of keywords real-quick
