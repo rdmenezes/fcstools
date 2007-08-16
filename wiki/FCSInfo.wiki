@@ -10,7 +10,8 @@ For instance:
 
 *>* fcsinfo sample1.fcs2
 
-{{{Name:        result.fcs
+{{{
+Name:        result.fcs
 Events:      35253
 Mode:        L
 Datatype:    I
@@ -41,4 +42,5 @@ Example Data
 ...          ...          ...          ...          ...
 322          204          536          585          147
 386          195          553          727          304
-296          206          550          708          227}}}
+296          206          550          708          227
+}}}
