@@ -22,7 +22,7 @@ namespace FCSTools
   // BitSize $PnB: number of bits (bytes) used
   //   to store this column's data
   // Range $PnR: specifies the data-range from [0,value(PnR)]
-  // Exponent $PnE: decade range of the data, 0,0 is linear
+  // Scale $PnE: decade range of the data, 0,0 is linear
   // ByteOrder ---: local ordering of the bytes to ease
   //   reading the data
   struct NDatum
@@ -31,7 +31,7 @@ namespace FCSTools
     std::string Specification;
     std::size_t BitSize;
     std::size_t Range;
-    std::pair<std::size_t,std::size_t> Exponent;
+    std::pair<std::size_t,std::size_t> Scale;
     byteorder_t ByteOrder;
   };
   typedef std::vector<NDatum> NData;
@@ -298,8 +298,8 @@ namespace FCSTools
 	if (fcs.Head.Parameter[i].Name.size () > 0)
 	  ssKeywords << "/$P" << N << "N/" << fcs.Head.Parameter[i].Name;
 	ssKeywords << "/$P" << N << "E/"
-		   << fcs.Head.Parameter[i].Exponent.first << ","
-		   << fcs.Head.Parameter[i].Exponent.second;
+		   << fcs.Head.Parameter[i].Scale.first << ","
+		   << fcs.Head.Parameter[i].Scale.second;
       }
     // So here we have a conundrum: we must ascertain the length
     // of the keyword section to determine where the DataSection begins,
@@ -587,7 +587,7 @@ namespace FCSTools
 	    std::getline (exp, sR);
 	    L = convert<std::size_t>(sL);
 	    R = convert<std::size_t>(sR);
-	    Head.Parameter[npar].Exponent = std::make_pair (L, R);
+	    Head.Parameter[npar].Scale = std::make_pair (L, R);
 	  }
 	par.clear ();
 	par.str ("");

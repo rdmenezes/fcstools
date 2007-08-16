@@ -87,6 +87,50 @@ namespace FCSTools
     convert (hr.Data, fcs.Data); 
   }
 
+  /*
+   std::string File;
+    std::string Mode;
+    std::string Datatype;
+    std::string BeginTime;
+    std::string EndTime;
+    std::string System;
+    std::string Cytometer;
+    std::string Date;
+    std::size_t Total;
+    std::size_t Nextdata;
+    byteorder_t ByteOrder;
+   */
+
+  template <typename FCS, typename ValueType>
+  void convert (FCS const& fcs, FCSTools::FCS<ValueType>& targ)
+  {
+    targ.Head.Parameter.clear ();
+    targ.Data.clear ();
+    targ.Head.File = "";
+    targ.Head.Mode = "L";
+    targ.Head.Datatype = "I";
+    targ.Head.BeginTime = "";
+    targ.Head.EndTime = "";
+    targ.Head.System = "FCSTools";
+    targ.Head.Cytometer = "FCSTools";
+    targ.Head.Total = 0;
+    targ.Head.Nextdata = 0;
+    targ.Head.ByteOrder.clear ();
+    const std::size_t ottf[] = {1, 2, 3, 4};
+    targ.Head.ByteOrder.insert (targ.Head.ByteOrder.begin (), ottf, ottf+4);
+    for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+      {
+	NDatum CD;
+	CD.Name = fcs.Head.Parameter[i].Name;
+	CD.Range = fcs.Head.Parameter[i].Range;
+	CD.Scale = fcs.Head.Parameter[i].Scale;
+	CD.BitSize = sizeof(blessed_integral);
+	CD.ByteOrder = targ.Head.ByteOrder;
+	targ.Head.Parameter.push_back (CD);
+      }
+    convert (targ.Data, fcs.Data); 
+  }
+
 }
 
 #endif//ARBITRARY_GUARD_MACRO_CODE_OF_DOOM_WHICH_IS_CALLED_FCS_2_TOOLS

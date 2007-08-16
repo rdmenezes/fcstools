@@ -1,6 +1,9 @@
 #ifndef ARBITRARY_GUARD_MACRO_CODE_OF_DOOM_WHICH_IS_CALLED_FCS_UTIL
 #define ARBITRARY_GUARD_MACRO_CODE_OF_DOOM_WHICH_IS_CALLED_FCS_UTIL
 
+#include<vector>
+#include<exception>
+
 namespace FCSTools
 {
 
@@ -121,9 +124,8 @@ namespace FCSTools
   // because Boost is too heavy-duty to add for
   // now.
   template <typename LValueType, typename RValueType>
-  void
-  convert (std::vector< std::vector<LValueType> >& Result,
-	   std::vector< std::vector<RValueType> > const& Data)
+  void convert (std::vector< std::vector<LValueType> >& Result,
+		std::vector< std::vector<RValueType> > const& Data)
   {
     const std::size_t DSize = Data.size ();
     Result = std::vector< std::vector<LValueType> >(DSize);
@@ -159,7 +161,7 @@ namespace FCSTools
   typedef std::vector<ldouble_vector_t> ldouble_vector_list_t;
 
   // Human.Readable
-  struct fcshr_error : std::exception {
+  struct fcshr_error : fcs_error {
     virtual const char* what () const throw () {
       return "FCS:H.R error";}
   };
