@@ -1,1 +1,31 @@
+To compile you need a compiler & make utility. I would suggest the GNU toolset, as this is what I am compiling with. However, the code is standard enough that it should compile Damn Near Anywhere.
+
+If you are building a project from this code, the code-base itself is flat and relative: keep all the code as it is, here, and it should compile just fine.
+
+To compile:
+
 make
+
+Or:
+
+make all -jX
+
+Where `X' is one more than the number of processors and `all' means `all' projects. Optionally:
+
+make Info
+
+Builds just fcsinfo
+
+make Convert
+
+Builds just fcsconvert
+
+make Test
+
+Builds just fcstest (out-of-data)
+
+make FCSxToHR
+
+Builds fcstofchr and fchrtofcs
+
+All of the source code is released under the GPL2, but the initial copyrights all are reserved to Jacob N. Smith. This code is used in internal projects; these projects are patent-encumbered, although this code is not; the code for those projects is closed-source and proprietary. Only those projects which I personally approve are allowed to use variants of the copyright which are not GPL2.
