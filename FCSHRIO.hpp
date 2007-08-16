@@ -69,9 +69,13 @@ namespace FCSTools
       typedef std::vector<ColumnDatum> ColumnData;
       struct Header
       {
+	typedef ColumnData parameter_type;
 	ColumnData Parameter;
       };
       
+      typedef Header head_type;
+      typedef dataset data_type;
+
       Header Head;
       dataset Data;
       void Reader (std::istream& file);

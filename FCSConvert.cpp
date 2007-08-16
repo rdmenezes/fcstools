@@ -48,7 +48,8 @@ int main (int argc, char *argv[])
 	    FCSTools::merge (result, fcses);
 	  else
 	    FCSTools::cat (result, fcses);
-	  std::fstream output (outname.c_str (), std::ios::out|std::ios::binary);
+	  std::fstream output (outname.c_str (),
+			       std::ios::out|std::ios::binary);
 	  FCSTools::Writer (output, result);
 	}
       catch (FCSTools::fcs_error const& ferr)
@@ -65,23 +66,22 @@ int main (int argc, char *argv[])
 	  std::cout << "Not enough parameters." << std::endl;
 	  return 1;
 	}
-      std::fstream fcsfile (args[2].c_str (), std::ios::in|std::ios::binary);
+      std::fstream fcsfile (args[2].c_str (),
+			    std::ios::in|std::ios::binary);
       if (! fcsfile)
 	{
-	  std::cout << "Could not open the file \"" << args[2] << "\"" << std::endl;
+	  std::cout << "Could not open the file \""
+		    << args[2] << "\"" << std::endl;
 	  return 1;
 	}
       try
 	{
-	  FCSTools::FCS<std::size_t> fcs = FCSTools::Reader<std::size_t> (fcsfile);
-	  for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+	  FCSTools::FCS<std::size_t> fcs
+	    = FCSTools::Reader<std::size_t> (fcsfile);
+	  std::vector<FCSTools::FCS<std::size_t > > splits;
+	  FCSTools::split (splits, fcs);
+	  for (std::size_t i=0; i<splits.size (); ++i)
 	    {
-	      FCSTools::FCS<std::size_t> split;
-	      split.Head = fcs.Head;
-	      split.Head.Parameter.clear ();
-	      split.Head.Parameter.push_back (fcs.Head.Parameter[i]);
-	      for (std::size_t j=0; j<fcs.Data.size (); ++j)
-		split.Data.push_back (std::vector<std::size_t>(1, fcs.Data[j][i]));
 	      std::stringstream ssidx;
 	      ssidx << (i+1);
 	      std::fstream ofcs((ssidx.str () + "---"
@@ -94,7 +94,7 @@ int main (int argc, char *argv[])
 			    << (i+1) << std::endl;
 		  continue;
 		}
-	      FCSTools::Writer (ofcs, split);
+	      FCSTools::Writer (ofcs, splits[i]);
 	    }
 	}
       catch (FCSTools::fcs_error const& ferr)
@@ -155,18 +155,13 @@ int main (int argc, char *argv[])
 	  else if ("trunc" == Command)
 	    {
 	      signed int Trunc = FCSTools::convert<signed int>(Parameter);
-	      std::size_t aTrunc = std::abs (Trunc);
-	      if (aTrunc > fcs.Data.size ())
-		aTrunc = fcs.Data.size ();
-	      if (Trunc > 0)
-		fcs.Data.erase (fcs.Data.begin (), fcs.Data.begin () + Trunc);
-	      else
-		fcs.Data.erase (fcs.Data.end () - Trunc, fcs.Data.end ());
+	      FCSTools::truncate (fcs, Trunc);
 	    }
 	  std::fstream outf (OutFN.c_str (), std::ios::out|std::ios::binary);
 	  if (! outf)
 	    {
-	      std::cout << "Could not open the file \"" << OutFN << "\"" << std::endl;
+	      std::cout << "Could not open the file \""
+			<< OutFN << "\"" << std::endl;
 	      return 1;
 	    }
 	  FCSTools::Writer (outf, fcs);
@@ -233,20 +228,13 @@ int main (int argc, char *argv[])
 	      signed int Trunc = FCSTools::convert<signed int>(Parameter);
 	      for (std::size_t i=0; i<fcses.size (); ++i)
 		{
-		  std::size_t aTrunc = std::abs (Trunc);
-		  if (aTrunc > fcses[i].Data.size ())
-		    aTrunc = fcses[i].Data.size ();
-		  if (Trunc > 0)
-		    fcses[i].Data.erase (fcses[i].Data.begin (),
-					 fcses[i].Data.begin () + aTrunc);
-		  else
-		    fcses[i].Data.erase (fcses[i].Data.end () - aTrunc, 
-					 fcses[i].Data.end ());
+		  truncate (fcses[i], Trunc);
 		}
 	    }
 	  for (std::size_t i=0; i<fcses.size (); ++i)
 	    {
-	      std::fstream outf (filenames[i].c_str (), std::ios::out|std::ios::binary);
+	      std::fstream outf (filenames[i].c_str (),
+				 std::ios::out|std::ios::binary);
 	      if (! outf)
 		{
 		  std::cout << "Could not open the file \"" << filenames[i]

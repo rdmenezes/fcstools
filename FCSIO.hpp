@@ -60,6 +60,7 @@ namespace FCSTools
   //   in addition to those above
   struct Header
   {
+    typedef NData parameter_type;
     std::string File;
     std::string Mode;
     std::string Datatype;
@@ -79,6 +80,16 @@ namespace FCSTools
       return this->AllKeywords[key]; }
   };
 
+ 
+  // An FCS file is a Head and a Data section
+  template <typename ValueType>
+  struct FCS
+  {
+    typedef Header head_type;
+    typedef std::vector<std::vector<ValueType> > data_type;
+    Header Head;
+    std::vector<std::vector<ValueType> > Data;
+  };
 
   // Acquires data in List format in integral form
   // List data is a sequential set of vectors (positions in space)
@@ -177,15 +188,7 @@ namespace FCSTools
       }
     return ivl;
   }
-  
-  // An FCS file is a Head and a Data section
-  template <typename ValueType>
-  struct FCS
-  {
-    Header Head;
-    std::vector<std::vector<ValueType> > Data;
-  };
-
+ 
   // Writes an FCS file to a stream
   template <typename ValueType>
   bool Writer (std::ostream& FCSFile, FCS<ValueType> const& fcs)
