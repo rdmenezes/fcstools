@@ -1,0 +1,37 @@
+#Flow Cytometry  Human Readable
+
+= Description of the Format =
+
+The format here is a combination of the UNIX XOrg.conf and keyword formats, and the FCS format. If you are unfamiliar with XOrg.conf or keyword formats the rules are relatively straightforward:
+
+  # Only one piece of information per line
+  # A key/value pair is written key: value
+  # To write a ":" use the escape character "\": \: (_usual escape rules apply_)
+  # Logical blocks are demarcated by `Begin`--`End` blocks
+  # Comments run from the "#" character to the end-of-line character; comments may occur anywhere, along with blank lines
+
+At the high level a Flow Cytometry Human Readable (FCHR) file is composed of (at least) two blocks, and commonly three:
+
+{{{
+Head
+Data
+Analysis
+}}}
+
+At minimum the `Head` and `Data` blocks are required. The order of these blocks is immutable.
+
+== Head ==
+
+The `Head` of an FCHR file is demarcated by the sigil "FCS:H.R" occuring on a single line by itself.
+
+The `Head` must be composed of (at minimum) one Column block (`ColumnBegin`--`ColumnEnd`) block. There must be one Column block per column in the data file. Other information may appear both in and around the Column block; it will be ignored.
+
+The following is an example Column block:
+
+{{{
+ColumnBegin
+  Name: FSC-H # name of the column, does _not_ have to be unique
+  Range: 1024 # range from [0, 1024]
+  Scale: 0, 0 # log/linear scale
+ColumnEnd
+}}}
