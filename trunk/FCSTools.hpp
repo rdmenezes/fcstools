@@ -1,7 +1,9 @@
 #ifndef ARBITRARY_GUARD_MACRO_CODE_OF_DOOM_WHICH_IS_CALLED_FCS_2_TOOLS
 #define ARBITRARY_GUARD_MACRO_CODE_OF_DOOM_WHICH_IS_CALLED_FCS_2_TOOLS
 
+#include"FCSUtil.hpp"
 #include"FCSIO.hpp"
+#include"FCSHRIO.hpp"
 
 namespace FCSTools
 {
@@ -15,8 +17,20 @@ namespace FCSTools
       return "Inconsistent number of columns while attempting to concatenate files";}
   };
 
-  template <typename ValueType>
-  void merge (FCS<ValueType>& Result, std::vector<FCS<ValueType> > const& fcses)
+  /*
+    FCS Concept:
+    FCS
+      .Head
+        .Parameter: RandomAccessContainer
+	  .Name
+	  .Range
+	  .Scale
+      .Data: RandomAccessContainer
+        .: RandomAccessContainer
+   */
+
+  template <typename FCS>
+  void merge (FCS& Result, std::vector<FCS> const& fcses)
   {
     // check data-length consistency
     if (0 == fcses.size ())
@@ -41,8 +55,8 @@ namespace FCSTools
 	  Result.Data[i].push_back (fcses[j].Data[i][k]);
   }
 
-  template <typename ValueType>
-  void cat (FCS<ValueType>& Result, std::vector<FCS<ValueType> > const& fcses)
+  template <typename FCS>
+  void cat (FCS& Result, std::vector<FCS> const& fcses)
   {
     // check row-length consistency
     if (0 == fcses.size ())
@@ -55,6 +69,22 @@ namespace FCSTools
     Result.Head = fcses[0].Head; // simple copy
     for (std::size_t i=0; i<fcses.size (); ++i)
       Result.Data.insert (Result.Data.end (), fcses[i].Data.begin (), fcses[i].Data.end ());
+  }
+
+  template <typename FCS>
+  void convert (FCS const& fcs, HR::FCSHR& hr)
+  {
+    hr.Head.Parameter.clear ();
+    hr.Data.clear ();
+    for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
+      {
+	HR::FCSHR::ColumnDatum CD;
+	CD.Name = fcs.Head.Parameter[i].Name;
+	CD.Range = fcs.Head.Parameter[i].Range;
+	CD.Scale = fcs.Head.Parameter[i].Scale;
+	hr.Head.Parameter.push_back (CD);
+      }
+    convert (hr.Data, fcs.Data); 
   }
 
 }
