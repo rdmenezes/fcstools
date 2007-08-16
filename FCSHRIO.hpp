@@ -5,6 +5,7 @@
 #include<sstream>
 #include<string>
 #include<exception>
+#include"FCSUtil.hpp"
 
 namespace FCSTools
 {
@@ -57,64 +58,59 @@ namespace FCSTools
 
    */
 
-    struct fcshr_error : std::exception {
-      virtual const char* what () const throw () {
-	return "FCS:H.R error";}
-    };
-    struct improper_state_in_file : fcshr_error {
-      virtual const char* what () const throw () {
-	return "Improper state in file";}
-    };
-
-    typedef std::vector<double> element;
-    typedef std::vector<element> dataset;
-
-    std::string lower (std::string const& str)
-    {
-      std::string result (str);
-      for (std::size_t i=0; i<result.size (); ++i)
-	result[i] = std::tolower (result[i]);
-      return result;
-    }
-
-    struct TrivialHandler
-    {
-      void operator () (std::string const& line) const
-      {
-      }
-    };
-
-    struct ColumnDatum
-    {
-      std::string Name;
-      double Range;
-      std::pair<double,double> Scale;
-    };
-    typedef std::vector<ColumnDatum> ColumnData;
-
     struct FCSHR
     {
-      ColumnData Columns;
+      struct ColumnDatum
+      {
+	std::string Name;
+	double Range;
+	std::pair<double,double> Scale;
+      };
+      typedef std::vector<ColumnDatum> ColumnData;
+      struct Header
+      {
+	ColumnData Parameter;
+      };
+      
+      Header Head;
       dataset Data;
-      template <typename LineHandler>
-      istream& Reader (std::istream&, LineHandler&);
-      std::istream& Reader (std::istream& file)
+      void Reader (std::istream& file);
+      friend std::istream& operator >> (std::istream& file, FCSHR& hr)
       {
-	TrivialHandler TheLineHandler;
-	return file (istream, TheLineHandler);
+	hr.Reader (file);
+	return file;
       }
-      friend std::istream& operator >> (std::istream& file)
+      void Writer (std::ostream& file) const;
+      friend std::ostream& operator << (std::ostream& file, FCSHR const& hr)
       {
-	this->Reader (file);
+	hr.Writer (file);
 	return file;
       }
     };
 
-    template <typename LineHandler>
-    void FCSHR::Reader (std::istream& file, LineHandler& Handler)
+    void FCSHR::Writer (std::ostream& file) const
+    {
+      file << "FCS:H.R" << std::endl
+	   << "Section Head" << std::endl;
+      for (std::size_t i=0; i<this->Head.Parameter.size (); ++i)
+	{
+	  file << "ColumnBegin" << std::endl
+	       << "  Name: " << this->Head.Parameter[i].Name << std::endl
+	       << "  Range: " << this->Head.Parameter[i].Range << std::endl
+	       << "  Scale: " << this->Head.Parameter[i].Scale.first
+	       << ", " << this->Head.Parameter[i].Scale.second << std::endl
+	       << "ColumnEnd" << std::endl;
+	}
+      file << "Section Data" << std::endl;
+      for (std::size_t i=0; i<this->Data.size (); ++i)
+	for (std::size_t j=0; j<this->Data[i].size (); ++j)
+	  file << (0==j?"\n":" ") << this->Data[i][j];
+    }
+
+    void FCSHR::Reader (std::istream& file)
     {
 
-      this->Columns.clear ();
+      this->Head.Parameter.clear ();
       this->Data.clear ();
 
       // rolling interpretation
@@ -143,17 +139,17 @@ namespace FCSTools
 		  std::string Name;
 		  std::size_t pos = line.find_first_of (':');
 		  pos = line.find_first_not_of (" \t\v", pos);
-		  if (std::npos != pos)
+		  if (std::string::npos != pos)
 		    Name = line.substr (pos, line.size ());
 
-		  this->Columns.back ().Name = Name;
+		  this->Head.Parameter.back ().Name = Name;
 		}
 	      else if ("range:" == lnonWs)
 		{
 		  double Range;
 		  ssLine >> Range;
 
-		  this->Columns.back ().Range = Range;
+		  this->Head.Parameter.back ().Range = Range;
 		}
 	      else if ("scale:" == lnonWs)
 		{
@@ -161,16 +157,15 @@ namespace FCSTools
 		  double Scale1, Scale2;
 		  ssLine >> Scale1 >> comma >> Scale2;
 
-		  this->Columns.back ().Scale = std::make_pair (Scale1, Scale2);
+		  this->Head.Parameter.back ().Scale = std::make_pair (Scale1, Scale2);
 		}
 	      else if ("columnend" == lnonWs)
 		{
 		  Column = false;
 		}
 	    }
-	  else if ('#' == lnonWs)
+	  else if ('#' == lnonWs[0])
 	    {
-	      Handler (line);
 	      continue;
 	    }
 	  else if ("fcs:h.r" == lnonWs)
@@ -211,18 +206,17 @@ namespace FCSTools
 		Column = true;
 	      else
 		throw improper_state_in_file ();
-	      this->Columns.push_back (ColumnDatum ());
+	      this->Head.Parameter.push_back (ColumnDatum ());
 	    }
 	  else if (Data == State)
 	    {
 	      std::stringstream ssData (line);
 	      // get data
-	      element Element (this->Columns.size ());
+	      element Element (this->Head.Parameter.size ());
 	      for (std::size_t i=0; i<Element.size (); ++i)
 		ssData >> Element[i];
 	    }
 	}
-      throw file;
     }
 
   }
