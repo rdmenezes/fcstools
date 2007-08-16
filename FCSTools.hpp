@@ -124,7 +124,7 @@ namespace FCSTools
 	CD.Name = fcs.Head.Parameter[i].Name;
 	CD.Range = fcs.Head.Parameter[i].Range;
 	CD.Scale = fcs.Head.Parameter[i].Scale;
-	CD.BitSize = sizeof(blessed_integral);
+	CD.BitSize = sizeof(blessed_integral) * DEFACTO_BYTEL;
 	CD.ByteOrder = targ.Head.ByteOrder;
 	targ.Head.Parameter.push_back (CD);
       }
