@@ -61,8 +61,8 @@ int main (int argc, char *argv[])
 	  if (! flags["--extended-information"])
 	    continue;
 	  std::cout << std::right << std::setw (12) << "Exponent: "
-		    << fcs.Head.Parameter[i].Exponent.first 
-		    << ", " << fcs.Head.Parameter[i].Exponent.second << std::endl
+		    << fcs.Head.Parameter[i].Scale.first 
+		    << ", " << fcs.Head.Parameter[i].Scale.second << std::endl
 		    << std::right << std::setw (12) << "Spec.: "
 		    << fcs.Head.Parameter[i].Specification << std::endl
 		    << std::endl;
