@@ -13,6 +13,7 @@ int main (int argc, char *argv[])
   flags["--compliant-mode"] = false;
   flags["--extended-information"] = false;
   flags["--all-data"] = false;
+  flags["--dump-keys-only"] = false;
 
   if (2 > argc)
     {
@@ -37,6 +38,21 @@ int main (int argc, char *argv[])
     {
       FCS<std::size_t> fcs
 	= Reader<std::size_t> (file, flags["--compliant-mode"]);
+
+      if (flags["--dump-keys-only"])
+	{
+	  std::map<std::string,std::string>::const_iterator
+	    beg = fcs.Head.AllKeywords.begin (),
+	    end = fcs.Head.AllKeywords.end ();
+	  for ( ; beg != end; ++beg)
+	    {
+	      std::cout << std::right << std::setw (20)
+			<< beg->first << ": " << beg->second
+			<< std::endl;
+	    }
+	  return 0;
+	}
+
       std::cout << "Name:        " << argv[1] << std::endl
 		<< "Events:      " << fcs.Data.size () << std::endl
 		<< "Mode:        " << fcs.Head.Mode << std::endl
@@ -47,7 +63,8 @@ int main (int argc, char *argv[])
 	  for (std::size_t i=0; i<fcs.Head.ByteOrder.size (); ++i)
 	    std::cout << (0==i?" ":", ") << (fcs.Head.ByteOrder[i]+1);
 	  std::cout << std::endl;
-	  std::cout << "Nextdata:    " << fcs.Head.AllKeywords["$NEXTDATA"] << std::endl;
+	  std::cout << "Nextdata:    "
+		    << fcs.Head.AllKeywords["$NEXTDATA"] << std::endl;
 	}
       std::cout << std::endl
 		<< "Column Information" << std::endl << std::endl;
