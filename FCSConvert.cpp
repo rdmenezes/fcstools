@@ -90,7 +90,8 @@ int main (int argc, char *argv[])
 				std::ios::out|std::ios::binary);
 	      if (! ofcs)
 		{
-		  std::cout << "Failed to open file associated with column number "
+		  std::cout << "Failed to open file associated"
+			    << " with column number "
 			    << (i+1) << std::endl;
 		  continue;
 		}
@@ -119,12 +120,14 @@ int main (int argc, char *argv[])
       std::fstream fcsfile (InFN.c_str (), std::ios::in|std::ios::binary);
       if (! fcsfile)
 	{
-	  std::cout << "Could not open the file \"" << InFN << "\"" << std::endl;
+	  std::cout << "Could not open the file \""
+		    << InFN << "\"" << std::endl;
 	  return 1;
 	}
       try
 	{
-	  FCSTools::FCS<std::size_t> fcs = FCSTools::Reader<std::size_t> (fcsfile);
+	  FCSTools::FCS<std::size_t> fcs
+	    = FCSTools::Reader<std::size_t> (fcsfile);
 	  if ("datatype" == Command)
 	    {
 	      if ("Integer" == Parameter)
@@ -198,7 +201,8 @@ int main (int argc, char *argv[])
 		  for (std::size_t fx=0; fx<fcses.size (); ++fx)
 		    {
 		      fcses[fx].Head.Datatype = "I";
-		      for (std::size_t i=0; i<fcses[fx].Head.Parameter.size (); ++i)
+		      for (std::size_t i=0;
+			   i<fcses[fx].Head.Parameter.size (); ++i)
 			fcses[fx].Head.Parameter[i].BitSize =
 			  sizeof(FCSTools::blessed_integral)
 			  * FCSTools::DEFACTO_BYTEL;
@@ -262,7 +266,8 @@ int main (int argc, char *argv[])
       std::fstream fcsfile (args[2].c_str (), std::ios::in|std::ios::binary);
       if (! fcsfile)
 	{
-	  std::cout << "Unable to open the file \"" << args[2] << "\"" << std::endl;
+	  std::cout << "Unable to open the file \""
+		    << args[2] << "\"" << std::endl;
 	  return 1;
 	}
       if ("out" != args[3])
@@ -281,7 +286,8 @@ int main (int argc, char *argv[])
       std::set<std::size_t> Columns (columns.begin (), columns.end ());
       try
 	{
-	  FCSTools::FCS<std::size_t> fcs = FCSTools::Reader<std::size_t> (fcsfile);
+	  FCSTools::FCS<std::size_t> fcs
+	    = FCSTools::Reader<std::size_t> (fcsfile);
 
 	  FCSTools::NData Parameter;
 	  for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
@@ -299,7 +305,8 @@ int main (int argc, char *argv[])
 	  std::fstream ofcs (args[4].c_str (), std::ios::out|std::ios::binary);
 	  if (! ofcs)
 	    {
-	      std::cout << "Unable to open file \"" << args[4] << "\"" << std::endl;
+	      std::cout << "Unable to open file \""
+			<< args[4] << "\"" << std::endl;
 	      return 1;
 	    }
 	  FCSTools::Writer (ofcs, fcs);
@@ -348,7 +355,8 @@ void show_help ()
   std::cout << "\tWhere command is one of: merge, cat, "
 	    << "datatype, width, trunc, resample, split, erase;" << std::endl
 	    << "\tand \"files...\" is a list of files;" << std::endl
-	    << "\tand \'filename\' is the name of the output file." << std::endl;
+	    << "\tand \'filename\' is the name of the output file."
+	    << std::endl;
   std::cout << std::endl;
   std::cout << "\tmerge files... out filename" << std::endl
 	    << "\t  add the columns of the files into a single" << std::endl
@@ -364,6 +372,7 @@ void show_help ()
 	    << "\t  Splits the file into new files, where each" << std::endl
 	    << "\t  is a column from the input file. Files are" << std::endl
 	    << "\t  named sequentially." << std::endl;
+  std::cout << std::endl;
   std::cout << "\terase file out filename columns N..." << std::endl
 	    << "\t  Erases the columns numbers (\"N...\") from" << std::endl
 	    << "\t  the file." << std::endl;
