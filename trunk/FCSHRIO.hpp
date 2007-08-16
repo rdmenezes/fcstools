@@ -208,7 +208,7 @@ namespace FCSTools
 		throw improper_state_in_file ();
 	      this->Head.Parameter.push_back (ColumnDatum ());
 	    }
-	  else if (Data == State)
+	  else if (Data == State && lnonWs.size () > 0)
 	    {
 	      std::stringstream ssData (line);
 	      // get data
