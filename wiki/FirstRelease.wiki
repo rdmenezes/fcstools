@@ -12,8 +12,7 @@ This is the first release of the FCSTools utilities. The tarball contains the pe
 There is no reason it should not compile on any reasonably compliant C++ compiler.
 
 Included in this release are five utilities:
-  * *fcsinfo* _provides a brief summary and information about FCS2.0 and FCS3.0 files_
-  * *fcsconvert* _provides a number of utilities for manipulating FCS- 2.0 and 3.0 files_
-  * *fcstest* _small test suite to make sure FCS- 2.0 and 3.0 files survive a round-trip_
-  * *fcstofchr* and *fchrtofcs* _converts between FCS- 2.0 and 3.0 files and a human-readable format; FCHR is a much easier to parse and use_
-
+  * [FCSInfo fcsinfo] _provides a brief summary and information about FCS2.0 and FCS3.0 files_
+  * [FCSConvert fcsconvert] _provides a number of utilities for manipulating FCS- 2.0 and 3.0 files_
+  * [FCSTest fcstest] _small test suite to make sure FCS- 2.0 and 3.0 files survive a round-trip_
+  * [FCS2FCHR fcstofchr] and [FCS2FCHR fchrtofcs] _converts between FCS- 2.0 and 3.0 files and a human-readable format; [FCHR FCHR] is a much easier to parse and use_
