@@ -132,6 +132,10 @@ namespace FCSTools
 
       while (std::getline (file, line))
 	{
+	  // strip off any comments
+	  std::size_t comment = line.find_first_of ('#');
+	  if (std::string::npos != comment)
+	    line = line.substr (0, comment);
 	  std::stringstream ssLine (line);
 	  std::string nonWs;
 	  ssLine >> nonWs;
