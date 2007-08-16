@@ -10,6 +10,8 @@ The format here is a combination of the UNIX XOrg.conf and keyword formats, and 
   # Logical blocks are demarcated by `Begin`--`End` blocks
   # Comments run from the "#" character to the end-of-line character; comments may occur anywhere, along with blank lines
 
+A large subset of a real FCHR file is [FCHRExample here].
+
 At the high level a Flow Cytometry Human Readable (FCHR) file is composed of (at least) two blocks, and commonly three:
 
 {{{
