@@ -18,4 +18,4 @@ The resulting file (sample1.fchr) is in the FCHR format. To reverse the transfor
 
 *>* fchrtofcs sample1.fchr sample1-r.fcs
 
-Should return a file similar to sample1.fcs. (In fact it will be most similar to the file produced by `[FCSTest fcstest]`.
+Should return a file similar to sample1.fcs. (In fact it will be most similar to the file produced by [FCSTest fcstest].
