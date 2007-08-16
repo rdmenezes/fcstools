@@ -31,3 +31,11 @@ int main (int argc, char *argv[])
   return 0;
 }
 }}}
+
+The line `using namespace FCSTools` tells the compiler that we will be using tools from the FCSTools namespace. In general this is a _very_ _bad_ _idea_ because the FCSTools namespace includes several functions which could cause the rest of your code to behave poorly.
+
+The next two lines guard against invalid parameters.
+
+With the line `std::ifstream fcsfile (...)` we open a _stream_---which is C++'s way of saying "a file"---in *binary* mode. Please note that the FCS- 2.0 and 3.0 formats require `binary` mode to function properly. The next line opens an FCS file---either 2.0 or 3.0. The data is stored in the `Data` portion of the FCS data-structure.
+
+The next line, `std::ofstream ofcsfile (...)` opens an output file in `binary` mode. The `Writer` function is then used to write the FCS data-structure to disk.
