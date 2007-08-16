@@ -165,7 +165,7 @@ namespace FCSTools
     std::string Specification;
     std::size_t BitSize;
     std::size_t Range;
-    std::pair<double,double> Exponent;
+    std::pair<std::size_t,std::size_t> Exponent;
     byteorder_t ByteOrder;
   };
   typedef std::vector<NDatum> NData;
@@ -219,11 +219,10 @@ namespace FCSTools
   // representing elements. Integral data is stored in bytes
   // (although unspecified) with some arbitrary permutation
   integral_vector_list_t
-  mode_L_integral (const unsigned char* cData,
-		   const unsigned char* cEnd,
-		   Header const& Data)
+  mode_L_integral (std::vector<unsigned char> const& Buffer,
+		   Header const& Head)
   {
-    const std::size_t bordsz = Data.Parameter.size ();
+    const std::size_t bordsz = Head.Parameter.size ();
     std::size_t veclength = 0;
     byteorders_t nByteOrders (bordsz);
 
@@ -239,20 +238,22 @@ namespace FCSTools
     // This computes those values.
     for (std::size_t i=0; i<bordsz; ++i)
       {
-	for (std::size_t j=0; j<Data.Parameter[i].ByteOrder.size (); ++j)
-	  nByteOrders[i].push_back (1 << (Data.Parameter[i].ByteOrder[j]
+	for (std::size_t j=0; j<Head.Parameter[i].ByteOrder.size (); ++j)
+	  nByteOrders[i].push_back (1 << (Head.Parameter[i].ByteOrder[j]
 					  * DEFACTO_BYTEL));
-	veclength += (Data.Parameter[i].BitSize / DEFACTO_BYTEL);
+	veclength += (Head.Parameter[i].BitSize / DEFACTO_BYTEL);
       }
     
     // The number of elements, this will agree with
     // $TOT if all goes well
-    const std::size_t nElements = (cEnd-cData) / veclength;
+    const std::size_t nElements = Buffer.size () / veclength;
 
     // Acquire the data; terminate when we have
     // all of the data
     integral_vector_list_t ivl (nElements);
     std::size_t element = 0;
+
+    std::vector<unsigned char>::const_iterator cData = Buffer.begin ();
 
     while (element < nElements)
       {
@@ -275,12 +276,11 @@ namespace FCSTools
   // to Integral List data, but the data is stored in a 
   // human-readable format
   integral_vector_list_t
-  mode_L_ASCII_variable (const unsigned char* cData,
-			 const unsigned char* cEnd,
-			 Header const& Data)
+  mode_L_ASCII_variable (std::vector<unsigned char> const& Buffer,
+			 Header const& Head)
   {
-    const std::size_t Dimension = Data.Parameter.size ();
-    std::string sData (cData, cEnd);
+    const std::size_t Dimension = Head.Parameter.size ();
+    std::string sData (Buffer.begin (), Buffer.end ());
     std::stringstream ss (sData);
     integral_vector_list_t ivl;
     integral_vector_t iv (Dimension, 0);
@@ -391,7 +391,7 @@ namespace FCSTools
       throw invalid_datatype ();
 
     // buffer for the output data
-    unsigned char Data[DataLength];
+    std::vector<unsigned char> Data (DataLength);
 
     // Pack the data in
     if ("*" == fcs.Head.Datatype)
@@ -432,6 +432,11 @@ namespace FCSTools
     for (std::size_t i=0; i<sizeof(blessed_integral); ++i)
       ssKeywords << (0==i?"/":",") << (i+1);
 
+    const std::size_t MaximumDataLengthForFCS2_0 = 99999999;
+    const bool Needs3_0 = DataLength > MaximumDataLengthForFCS2_0;
+    const std::size_t OffsetToText = 256;
+    const std::size_t DataPadding = 25;
+
     std::size_t sBitSize;
     if ("I" == fcs.Head.Datatype)
       sBitSize = sizeof(blessed_integral) * DEFACTO_BYTEL;
@@ -444,22 +449,59 @@ namespace FCSTools
 	ssKeywords << "/$P" << N << "R/" << fcs.Head.Parameter[i].Range;
 	if (fcs.Head.Parameter[i].Name.size () > 0)
 	  ssKeywords << "/$P" << N << "N/" << fcs.Head.Parameter[i].Name;
+	ssKeywords << "/$P" << N << "E/"
+		   << fcs.Head.Parameter[i].Exponent.first << ","
+		   << fcs.Head.Parameter[i].Exponent.second;
       }
+    // So here we have a conundrum: we must ascertain the length
+    // of the keyword section to determine where the DataSection begins,
+    // but if the DataSection is too long we have to insert more
+    // keywords. The trick is to know this:
+    // /$BEGINDATA/-100-chars-/$ENDDATA/-100-chars/
+    // 123456789012           3456789012          3
+    // 000000000111           1111111222          2
+    // 23 + 200 = 223: KeyWords.size () + OffsetToText + 223 + DataPadding = DataOffset!
+    std::size_t DataOffset = 
+      223 + ssKeywords.str ().size ()
+      + OffsetToText + DataPadding;
+    std::size_t DataEnd = DataOffset + DataLength;
+    ssKeywords << "/$BEGINDATA/" << std::setw (100) << DataOffset
+	       << "/$ENDDATA/" << std::setw (100) << DataEnd;
     ssKeywords << "/";
     std::string Keywords = ssKeywords.str ();
 
-    FCSFile << "FCS2.0    ";
+
+    if (Needs3_0)
+      FCSFile << "FCS3.0    ";
+    else
+      FCSFile << "FCS2.0    ";
     FCSFile.fill (' ');
-    FCSFile << std::setw (8) << 256
-	    << std::setw (8) << (256+Keywords.size()-1)
-	    << std::setw (8) << (256+Keywords.size()+25)
-	    << std::setw (8) << (256+Keywords.size()+25+DataLength)
+    FCSFile << std::setw (8) << OffsetToText
+	    << std::setw (8) << (OffsetToText+Keywords.size()-1);
+    if (Needs3_0)
+      FCSFile << std::setw (8) << 0 << std::setw (8) << 0;
+    else
+      FCSFile << std::setw (8) << (OffsetToText+Keywords.size()+25)
+	      << std::setw (8) << (OffsetToText+Keywords.size()+25+DataLength);
+    FCSFile << std::setw (8) << 0
 	    << std::setw (8) << 0
-	    << std::setw (8) << 0
-	    << std::setw (256-58) << " "
+	    << std::setw (OffsetToText-58) << " "
 	    << Keywords
-	    << std::setw (25) << " ";
-    FCSFile.write ((char*)Data, DataLength);
+	    << std::setw (DataPadding) << " ";
+    // write the data in 4096-element chunks
+    const std::size_t PageSize = 4096;
+    std::size_t Chunk = 0;
+    char Buffer[PageSize];
+    while (Chunk < Data.size ())
+      {
+	std::size_t GetC = PageSize;
+	if ((Chunk+GetC) > Data.size ())
+	  GetC = Data.size () - Chunk;
+	for (std::size_t i=0; i<GetC; ++i)
+	  Buffer[i] = Data[Chunk+i];
+	FCSFile.write (Buffer, GetC);
+	Chunk += PageSize;
+      }
     return FCSFile;
   }
 
@@ -479,6 +521,8 @@ namespace FCSTools
   {
     typedef std::vector<ValueType> ElementT;
     typedef std::vector<ElementT> VElementT;
+
+    const std::size_t InitialOffset = FCSFile.tellg ();
 
     FCS<ValueType> fcs;
     Header& Head = fcs.Head;
@@ -508,7 +552,7 @@ namespace FCSTools
     const std::size_t NumberLocations = 4;
     const std::size_t HeaderLength = KindLength + LocationSize * NumberLocations;
     char DumbBuffer[128];
-    FCSFile.seekg (0);
+    FCSFile.seekg (InitialOffset);
     FCSFile.read (DumbBuffer, KindLength * LocationSize * NumberLocations);
     DumbBuffer[HeaderLength] = 0;
 
@@ -525,21 +569,26 @@ namespace FCSTools
     if (2.0 != Kind && 3.0 != Kind)
       throw unsupported_fcs_format ();
 
+    bool KeyWordDataSection = false;
+
     if (KeysEnd < KeysBegin)
       throw text_miscalculation_error ();
     if (DataEnd < DataBegin)
-      throw data_miscalculation_error ();
+	if (DataEnd == DataBegin && 0 == DataBegin)
+	  {
+	    if ((Compliance_P && 3.0 == Kind) || !Compliance_P)
+	      KeyWordDataSection = true;
+	    else
+	      throw data_miscalculation_error ();
+	  }
 
-    // Lengths of the various sections
-    KeySection = KeysEnd - KeysBegin + 1;
-    DataSection = DataEnd - DataBegin + 1;
-    
-    FCSFile.seekg (KeysBegin);
+    FCSFile.seekg (InitialOffset+KeysBegin);
     
     // Now we get the key/value pairs; they
     // are delimited by the first character in the
     // `Text' section. I don't know why.
     char Delimiter = (char)FCSFile.peek ();
+    KeySection = KeysEnd - KeysBegin + 1;
     char cKeyWordBuffer[KeySection+2];
 
     FCSFile.get (cKeyWordBuffer, KeySection+1, 0);
@@ -555,11 +604,36 @@ namespace FCSTools
       }
     while (ss);
     
-    // Go to the Data section; get the data in a buffer
-    FCSFile.seekg (DataBegin);
-    
-    unsigned char cHeadBuffer[DataSection+12];
-    FCSFile.read ((char*)cHeadBuffer, DataSection+1);
+    if (KeyWordDataSection)
+      {
+	if (Head.has_keyword ("$BEGINDATA"))
+	  DataBegin = convert<std::size_t>(Head["$BEGINDATA"]);
+	else
+	  throw data_miscalculation_error ();
+	if (Head.has_keyword ("$ENDDATA"))
+	  DataEnd = convert<std::size_t>(Head["$ENDDATA"]);
+	else
+	  throw data_miscalculation_error ();	
+      }
+
+    // Go to the Data section; we will read the data in
+    // as 4096-byte-pages
+    const std::size_t PageSize = 4096;
+    FCSFile.seekg (InitialOffset+DataBegin);
+    DataSection = DataEnd - DataBegin + 1;
+    std::vector<unsigned char> DataBuffer (DataSection);
+    std::size_t Chunk = 0;
+    char Buffer[PageSize];
+    while (Chunk < DataSection)
+      {
+	std::size_t GetC = PageSize;
+	if ((Chunk+GetC) > DataSection)
+	  GetC = DataSection - Chunk;
+	FCSFile.read (Buffer, GetC);
+	for (std::size_t i=0; i<GetC; ++i)
+	  DataBuffer[Chunk+i] = Buffer[i];
+	Chunk += PageSize;
+      }
     
     // Pick through and get a bunch of keywords real-quick
     // Keywords that "throw" are "fatal": they are -required-
@@ -654,8 +728,8 @@ namespace FCSTools
 	    std::string sL, sR;
 	    std::getline (exp, sL, ',');
 	    std::getline (exp, sR);
-	    L = convert<double>(sL);
-	    R = convert<double>(sR);
+	    L = convert<std::size_t>(sL);
+	    R = convert<std::size_t>(sR);
 	    Head.Parameter[npar].Exponent = std::make_pair (L, R);
 	  }
 	par.clear ();
@@ -743,14 +817,10 @@ namespace FCSTools
 	switch (Head.Datatype[0])
 	  {
 	  case 'I': ivl
-	      = mode_L_integral (cHeadBuffer,
-				 cHeadBuffer+DataSection+1,
-				 Head);
+	      = mode_L_integral (DataBuffer, Head);
 	    break;
 	  case '*': ivl
-	      = mode_L_ASCII_variable (cHeadBuffer,
-				       cHeadBuffer+DataSection+1,
-				       Head);
+	      = mode_L_ASCII_variable (DataBuffer, Head);
 	    break;
 	  default : break;
 	  }
