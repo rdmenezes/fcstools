@@ -1,0 +1,34 @@
+#fcstest
+
+= FCSTest =
+
+fcstest performs a "round-trip" on your data. That is:
+
+*>* fcstest sample1.fcs
+
+Results in a file being created called "Result.fcs2". This file should be (similar) if not identical to the input file. If it is not, please send us a bug report!
+
+The code for fcstest is trivially short, so we will include it here and describe the parts of it:
+
+{{{
+#include<fstream>
+#include"FCSIO.hpp"
+
+
+int main (int argc, char *argv[])
+{
+
+  using namespace FCSTools;
+
+  if (argc != 2)
+    return 0;
+
+  std::ifstream fcsfile (argv[1], std::ios::in|std::ios::binary);
+  FCS<std::size_t> fcs = Reader<std::size_t> (fcsfile);
+  
+  std::ofstream ofcsfile ("Result.fcs2", std::ios::out|std::ios::binary);
+  Writer (ofcsfile, fcs);
+
+  return 0;
+}
+}}}
