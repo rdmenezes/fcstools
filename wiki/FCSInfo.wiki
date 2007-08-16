@@ -9,9 +9,13 @@ _fcsinfo_ is straightforward to use:
 For instance:
 
 *>* fcsinfo sample1.fcs2
+
 Name:        result.fcs
+
 Events:      35253
+
 Mode:        L
+
 Datatype:    I
 
 Column Information
@@ -35,9 +39,15 @@ FL3-H
 Example Data
 
 431          223          586          705          282
+
 350          224          549          658          211
+
 446          399          589          431          246
+
 ...          ...          ...          ...          ...
+
 322          204          536          585          147
+
 386          195          553          727          304
+
 296          206          550          708          227
