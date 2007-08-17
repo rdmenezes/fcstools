@@ -584,7 +584,7 @@ namespace FCSTools
 	if (Head.has_keyword (key))
 	  {
 	    std::stringstream exp (Head[key]);
-	    double L, R;
+	    std::size_t L, R;
 	    std::string sL, sR;
 	    std::getline (exp, sL, ',');
 	    std::getline (exp, sR);
