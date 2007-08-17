@@ -63,8 +63,8 @@ namespace FCSTools
       struct ColumnDatum
       {
 	std::string Name;
-	double Range;
-	std::pair<double,double> Scale;
+	std::size_t Range;
+	std::pair<std::size_t,std::size_t> Scale;
       };
       typedef std::vector<ColumnDatum> ColumnData;
       struct Header
@@ -154,7 +154,7 @@ namespace FCSTools
 		}
 	      else if ("range:" == lnonWs)
 		{
-		  double Range;
+		  std::size_t Range;
 		  ssLine >> Range;
 
 		  this->Head.Parameter.back ().Range = Range;
@@ -162,10 +162,11 @@ namespace FCSTools
 	      else if ("scale:" == lnonWs)
 		{
 		  std::string comma;
-		  double Scale1, Scale2;
+		  std::size_t Scale1, Scale2;
 		  ssLine >> Scale1 >> comma >> Scale2;
 
-		  this->Head.Parameter.back ().Scale = std::make_pair (Scale1, Scale2);
+		  this->Head.Parameter.back ().Scale
+		    = std::make_pair (Scale1, Scale2);
 		}
 	      else if ("columnend" == lnonWs)
 		{
