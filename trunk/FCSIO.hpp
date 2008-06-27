@@ -529,7 +529,7 @@ namespace FCSTools
 
     if (fcs.Head.has_keyword ("$FIL")) {
       std::cout << "BSPLIT" << std::endl;
-      fcs.Head.File = "FOO";
+      fcs.Head.Date = "FOO";
       std::cout << "SPLIT" << std::endl;
       fcs.Head["$FIL"];
       std::cout << "ASPLIT" << std::endl;
