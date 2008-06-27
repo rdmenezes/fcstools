@@ -404,14 +404,14 @@ namespace FCSTools
                 DataBegin = 0, DataEnd = 0;
     FCSFile >> FCSKind;
 
-    /*double Kind = 0.0;
+    double Kind = 0.0;
 
     if ("FCS2.0" == FCSKind)
       Kind = 2.0;
     else if ("FCS3.0" == FCSKind)
       Kind = 3.0;
 
-    // Want any teeth pulled?
+    /*// Want any teeth pulled?
     const std::size_t KindLength = 10;
     const std::size_t LocationSize = 8;
     const std::size_t NumberLocations = 4;
