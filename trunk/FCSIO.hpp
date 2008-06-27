@@ -398,8 +398,8 @@ namespace FCSTools
     // but if you *do* have a crap-load of data, FCS2.0 is not the standard
     // for you.
 
-    /*std::string FCSKind;
-    std::size_t KeysBegin, KeysEnd, KeySection, DataBegin, DataEnd, DataSection;
+    std::string FCSKind;
+    /*std::size_t KeysBegin, KeysEnd, KeySection, DataBegin, DataEnd, DataSection;
     FCSFile >> FCSKind;
 
     double Kind = 0.0;
