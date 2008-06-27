@@ -1,4 +1,4 @@
-To compile you need a compiler & make utility. I would suggest the GNU toolset, as this is what I am compiling with. However, the code is standard enough that it should compile Damn Near Anywhere.
+ To compile you need a compiler & make utility. I would suggest the GNU toolset, as this is what I am compiling with. However, the code is standard enough that it should compile Damn Near Anywhere.
 
 If you are building a project from this code, the code-base itself is flat and relative: keep all the code as it is, here, and it should compile just fine.
 
