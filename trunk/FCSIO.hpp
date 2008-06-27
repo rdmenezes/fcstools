@@ -416,7 +416,6 @@ namespace FCSTools
     const std::size_t LocationSize = 8;
     const std::size_t NumberLocations = 4;
     const std::size_t HeaderLength = KindLength + LocationSize * NumberLocations;
-    std::cout << "Header Length " << HeaderLength << std::endl;
     char DumbBuffer[HeaderLength+10];
     FCSFile.seekg (InitialOffset);
     FCSFile.read (DumbBuffer, HeaderLength);
@@ -448,7 +447,7 @@ namespace FCSTools
             throw data_miscalculation_error ();
         }
 
-    /*FCSFile.seekg (InitialOffset+KeysBegin);
+    FCSFile.seekg (InitialOffset+KeysBegin);
     
     // Now we get the key/value pairs; they
     // are delimited by the first character in the
@@ -460,7 +459,7 @@ namespace FCSTools
     FCSFile.get (cKeyWordBuffer, KeySection+1, 0);
     std::string KeyWordBuffer (cKeyWordBuffer+1, KeySection+1);
 
-    std::stringstream ss (KeyWordBuffer);
+    /*std::stringstream ss (KeyWordBuffer);
     do
       {
         std::string key, value;
