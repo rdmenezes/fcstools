@@ -399,8 +399,8 @@ namespace FCSTools
     // for you.
 
     std::string FCSKind;
-    /*std::size_t KeysBegin, KeysEnd, KeySection, DataBegin, DataEnd, DataSection;
-    FCSFile >> FCSKind;
+    std::size_t KeysBegin, KeysEnd, KeySection, DataBegin, DataEnd, DataSection;
+    /*FCSFile >> FCSKind;
 
     double Kind = 0.0;
 
