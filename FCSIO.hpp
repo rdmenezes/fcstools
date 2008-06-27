@@ -9,7 +9,7 @@
 #include<sstream>
 #include<exception>
 #include<iomanip>
-#include"FCSUtil.hpp"
+#include<FCSUtil.hpp>
 
 namespace FCSTools
 {
