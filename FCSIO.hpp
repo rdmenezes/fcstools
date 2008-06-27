@@ -422,7 +422,7 @@ namespace FCSTools
     FCSFile.read (DumbBuffer, HeaderLength);
     DumbBuffer[HeaderLength] = 0;
 
-    /*FCSKind = std::string (DumbBuffer, DumbBuffer+KindLength);
+    FCSKind = std::string (DumbBuffer, DumbBuffer+KindLength);
     std::stringstream ssLocations;
     for (std::size_t i=0; i<NumberLocations; ++i)
       {
@@ -432,7 +432,7 @@ namespace FCSTools
       }
     ssLocations >> KeysBegin >> KeysEnd >> DataBegin >> DataEnd;
 
-    if (2.0 != Kind && 3.0 != Kind)
+    /*if (2.0 != Kind && 3.0 != Kind)
       throw unsupported_fcs_format ();
 
     bool KeyWordDataSection = false;
