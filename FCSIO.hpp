@@ -417,8 +417,6 @@ namespace FCSTools
       }
     ssLocations >> KeysBegin >> KeysEnd >> DataBegin >> DataEnd;
 
-    std::cout << "L(7)" << std::endl;
-
     if (2.0 != Kind && 3.0 != Kind)
       throw unsupported_fcs_format ();
 
@@ -434,8 +432,6 @@ namespace FCSTools
 	    else
 	      throw data_miscalculation_error ();
 	  }
-
-    std::cout << "L(6)" << std::endl;
 
     FCSFile.seekg (InitialOffset+KeysBegin);
     
@@ -471,8 +467,6 @@ namespace FCSTools
 	  throw data_miscalculation_error ();	
       }
 
-    std::cout << "L(5)" << std::endl;
-
     // Go to the Data section; we will read the data in
     // as 4096-byte-pages
     FCSFile.seekg (InitialOffset+DataBegin);
@@ -480,15 +474,12 @@ namespace FCSTools
     std::vector<unsigned char> DataBuffer;
     if (true)
       {
-	std::cout << "U(0)" << std::endl;
 	const std::size_t PageSize = 128000;
 	DataBuffer.reserve(DataSection);
 	std::size_t Chunk = 0;
 	char Buffer[PageSize];
-	std::cout << "U(1)" << std::endl;
 	while (Chunk < DataSection)
 	  {
-	    std::cout << "S(1)" << std::endl;
 	    std::size_t GetC = PageSize;
 	    if ((Chunk+GetC) > DataSection)
 	      GetC = DataSection - Chunk;
@@ -496,7 +487,6 @@ namespace FCSTools
 	    DataBuffer.insert (DataBuffer.end(), Buffer, Buffer+GetC);
 	    Chunk += PageSize;
 	  }
-	std::cout << "U(2)" << std::endl;
       }
     else
       {
@@ -515,8 +505,6 @@ namespace FCSTools
 
     const std::size_t nParameters = fcs.Head.Parameter.size ();
 
-    std::cout << "V(0)" << std::endl;
-
     // some keywords throw if they are 'required' by the standard
     // but are not required to actually read the file; they
     // throw when the Compliance_P switch is set
@@ -531,16 +519,12 @@ namespace FCSTools
     if (fcs.Head.has_keyword ("$BTIM"))
       fcs.Head.BeginTime = fcs.Head["$BTIM"];
 
-    std::cout << "V(1)" << std::endl;
-
     if (fcs.Head.has_keyword ("$ETIM"))
       fcs.Head.EndTime = fcs.Head["$ETIM"];
 
-    std::cout << "V(2)" << std::endl;
-
     if (fcs.Head.has_keyword ("$FIL")) {
       std::cout << "Pre " << fcs.Head["$FIL"] << std::endl;
-      //fcs.Head.File = fcs.Head["$FIL"];
+      fcs.Head.File = fcs.Head["$FIL"];
       std::cout << "Post " << fcs.Head["$FIL"] << std::endl;
     }
 
