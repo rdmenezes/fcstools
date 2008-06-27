@@ -27,7 +27,9 @@ namespace FCSTools
   //   reading the data
   struct NDatum
   {
-    NDatum () {}
+    NDatum ()
+      : Name(), Specification(), BitSize(), Range()
+      , Scale(), ByteOrder() {}
     std::string Name;
     std::string Specification;
     std::size_t BitSize;
@@ -61,9 +63,12 @@ namespace FCSTools
   //   in addition to those above
   struct Header
   {
-    Header () {}
     typedef NData parameter_type;
-    std::string d1, d2, d3;
+    Header ()
+      : File(), Mode(), Datatype(), BeginTime(), EndTime()
+      , System(), Cytometer(), Date(), Total(), Nextdata()
+      , ByteOrder(), Parameter(), AllKeywords() {}
+
     std::string File;
     std::string Mode;
     std::string Datatype;
@@ -95,6 +100,9 @@ namespace FCSTools
   {
     typedef Header head_type;
     typedef std::vector<std::vector<ValueType> > data_type;
+
+    FCS () : Head(), Data() {}
+
     head_type Head;
     data_type Data;
   };
@@ -526,17 +534,8 @@ namespace FCSTools
     if (fcs.Head.has_keyword ("$ETIM"))
       fcs.Head.EndTime = fcs.Head["$ETIM"];
 
-    std::cout << "HERE-1" << std::endl;
-
-    if (fcs.Head.has_keyword ("$FIL")) {
-      std::cout << "BSPLIT" << std::endl;
-      fcs.Head.File = "FOO";
-      std::cout << "SPLIT" << std::endl;
-      fcs.Head["$FIL"];
-      std::cout << "ASPLIT" << std::endl;
-    }
-
-    std::cout << "HERE-2" << std::endl;
+    if (fcs.Head.has_keyword ("$FIL"))
+      fcs.Head.File = fcs.Head["$FIL"];
 
     if (fcs.Head.has_keyword ("$DATE"))
       fcs.Head.Date = fcs.Head["$DATE"];
