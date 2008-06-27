@@ -136,6 +136,7 @@ namespace FCSTools
 
   // DEBUGGING UTILITY TO PRINT VECTORS
 
+#ifdef DEBUG_FCS
   template <typename T>
   std::ostream& operator << (std::ostream& ostr, std::vector<T> const& V)
   {
@@ -143,7 +144,8 @@ namespace FCSTools
       ostr << V[i] << " ";
     return ostr;
   }
-    
+#endif
+
   // ByteOrder stores the arbitrary byte-order
   // of the FCS file. 1234 is x86; 4321 is PPC
   // 2143 is Sparc, etc.
