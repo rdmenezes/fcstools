@@ -525,6 +525,8 @@ namespace FCSTools
     if (fcs.Head.has_keyword ("$FIL"))
       fcs.Head.File = "FOO";//fcs.Head["$FIL"];
 
+    std::cout << "HERE" << std::endl;
+
     if (fcs.Head.has_keyword ("$DATE"))
       fcs.Head.Date = fcs.Head["$DATE"];
 
