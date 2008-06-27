@@ -378,8 +378,6 @@ namespace FCSTools
     const std::size_t InitialOffset = FCSFile.tellg ();
 
     FCS<ValueType> fcs;
-    //Header& Head = fcs.Head;
-    VElementT& Data = fcs.Data;
 
     // This is the `header' section as defined in the FCS2.0 standard;
     // There are some sort of noises about having `8' characters for this,
@@ -511,45 +509,45 @@ namespace FCSTools
     // Keywords that "throw" are "fatal": they are -required-
     // to interpret the FCS file.
     if (fcs.Head.has_keyword ("$PAR"))
-      Head.Parameter = NData(convert<std::size_t>(Head["$PAR"]));
+      fcs.Head.Parameter = NData(convert<std::size_t>(fcs.Head["$PAR"]));
     else
       throw no_par_keyword ();
 
-    const std::size_t nParameters = Head.Parameter.size ();
+    const std::size_t nParameters = fcs.Head.Parameter.size ();
 
     std::cout << "V(0)" << std::endl;
 
     // some keywords throw if they are 'required' by the standard
     // but are not required to actually read the file; they
     // throw when the Compliance_P switch is set
-    if (Head.has_keyword ("$NEXTDATA"))
-      Head.Nextdata = convert<std::size_t>(Head["$NEXTDATA"]);
+    if (fcs.Head.has_keyword ("$NEXTDATA"))
+      fcs.Head.Nextdata = convert<std::size_t>(fcs.Head["$NEXTDATA"]);
     else if (Compliance_P)
       throw no_nextdata_keyword ();
 
-    if (Head.has_keyword ("$SYSTEM"))
-      Head.System = Head["$SYS"];
+    if (fcs.Head.has_keyword ("$SYSTEM"))
+      fcs.Head.System = fcs.Head["$SYS"];
 
-    if (Head.has_keyword ("$BTIM"))
-      Head.BeginTime = Head["$BTIM"];
+    if (fcs.Head.has_keyword ("$BTIM"))
+      fcs.Head.BeginTime = fcs.Head["$BTIM"];
 
     std::cout << "V(1)" << std::endl;
 
-    if (Head.has_keyword ("$ETIM"))
-      Head.EndTime = Head["$ETIM"];
+    if (fcs.Head.has_keyword ("$ETIM"))
+      fcs.Head.EndTime = fcs.Head["$ETIM"];
 
     std::cout << "V(2)" << std::endl;
 
-    if (Head.has_keyword ("$FIL")) {
-      std::cout << "Pre " << Head["$FIL"] << std::endl;
-      //Head.File = Head["$FIL"];
-      std::cout << "Post " << Head["$FIL"] << std::endl;
+    if (fcs.Head.has_keyword ("$FIL")) {
+      std::cout << "Pre " << fcs.Head["$FIL"] << std::endl;
+      //fcs.Head.File = fcs.Head["$FIL"];
+      std::cout << "Post " << fcs.Head["$FIL"] << std::endl;
     }
 
     std::cout << "V(3)" << std::endl;
 
-    if (Head.has_keyword ("$DATE"))
-      Head.Date = Head["$DATE"];
+    if (fcs.Head.has_keyword ("$DATE"))
+      fcs.Head.Date = fcs.Head["$DATE"];
 
     std::cout << "V(4)" << std::endl;
 
@@ -563,31 +561,31 @@ namespace FCSTools
 	par << "$P" << (npar+1) << "B";
 	std::string key;
 	par >> key;
-	if (Head.has_keyword (key))
+	if (fcs.Head.has_keyword (key))
 	  {
 	    // Bit-Size OR Byte-Size, depending upon
 	    // the data type; since we ignore fixed ASCII,
 	    // it is -always- Bit-Size
-	    if ("*" == Head[key])
+	    if ("*" == fcs.Head[key])
 	      {
 		Variable = true;
-		Head.Parameter[npar].BitSize = 0; // variable bit-size
+		fcs.Head.Parameter[npar].BitSize = 0; // variable bit-size
 	      }
 	    else
-	      Head.Parameter[npar].BitSize = convert<std::size_t>(Head[key]);
+	      fcs.Head.Parameter[npar].BitSize = convert<std::size_t>(fcs.Head[key]);
 	  }
 	else
 	  throw no_bitsize_keyword (npar);
 	// must be byte-aligned to a char
-	if ((Head.Parameter[npar].BitSize%DEFACTO_BYTEL) != 0)
+	if ((fcs.Head.Parameter[npar].BitSize%DEFACTO_BYTEL) != 0)
 	  throw invalid_bit_length ();
 	par.clear ();
 	par.str ("");
 	
 	par << "$P" << (npar+1) << "R";
 	par >> key;
-	if (Head.has_keyword (key))
-	  Head.Parameter[npar].Range = convert<std::size_t>(Head[key]);
+	if (fcs.Head.has_keyword (key))
+	  fcs.Head.Parameter[npar].Range = convert<std::size_t>(fcs.Head[key]);
 	else if (Compliance_P)
 	  // if we ever support Correlated or Uncorrelated data
 	  // we will need this keyword
@@ -598,8 +596,8 @@ namespace FCSTools
 	// an `optional' keyword; morons
 	par << "$P" << (npar+1) << "N";
 	par >> key;
-	if (Head.has_keyword (key))
-	  Head.Parameter[npar].Name = Head[key];
+	if (fcs.Head.has_keyword (key))
+	  fcs.Head.Parameter[npar].Name = fcs.Head[key];
 	par.clear ();
 	par.str ("");
 	
@@ -608,16 +606,16 @@ namespace FCSTools
 	// missing
 	par << "$P" << (npar+1) << "E";
 	par >> key;
-	if (Head.has_keyword (key))
+	if (fcs.Head.has_keyword (key))
 	  {
-	    std::stringstream exp (Head[key]);
+	    std::stringstream exp (fcs.Head[key]);
 	    std::size_t L, R;
 	    std::string sL, sR;
 	    std::getline (exp, sL, ',');
 	    std::getline (exp, sR);
 	    L = convert<std::size_t>(sL);
 	    R = convert<std::size_t>(sR);
-	    Head.Parameter[npar].Scale = std::make_pair (L, R);
+	    fcs.Head.Parameter[npar].Scale = std::make_pair (L, R);
 	  }
 	par.clear ();
 	par.str ("");
@@ -625,8 +623,8 @@ namespace FCSTools
 	// Yeah. No clue.
 	par << "$P" << (npar+1) << "S";
 	par >> key;
-	if (Head.has_keyword (key))
-	  Head.Parameter[npar].Specification = Head[key];
+	if (fcs.Head.has_keyword (key))
+	  fcs.Head.Parameter[npar].Specification = fcs.Head[key];
 	par.clear ();
 	par.str ("");
       }
@@ -638,8 +636,8 @@ namespace FCSTools
     // I think about it, this goddamn file format may last
     // that long.
     std::stringstream byteorder;
-    if (Head.has_keyword ("$BYTEORD"))
-      byteorder << Head["$BYTEORD"];
+    if (fcs.Head.has_keyword ("$BYTEORD"))
+      byteorder << fcs.Head["$BYTEORD"];
     else
       throw no_byteorder_keyword ();
 
@@ -651,7 +649,7 @@ namespace FCSTools
 	std::getline (byteorder, byteo, ',');
 	if (! byteorder)
 	  break;
-	Head.ByteOrder.push_back (convert<std::size_t>(byteo)-1);
+	fcs.Head.ByteOrder.push_back (convert<std::size_t>(byteo)-1);
       }
    
     // This creates a custom permutation for each parameter;
@@ -660,67 +658,67 @@ namespace FCSTools
     // for our particular value, making look-up trivial.
     for (std::size_t i=0; i<nParameters; ++i)
       {
-	for (std::size_t j=0; j<Head.ByteOrder.size (); ++j)
-	  if (Head.ByteOrder[j] < (Head.Parameter[i].BitSize/DEFACTO_BYTEL))
-	    Head.Parameter[i].ByteOrder.push_back (Head.ByteOrder[j]);
+	for (std::size_t j=0; j<fcs.Head.ByteOrder.size (); ++j)
+	  if (fcs.Head.ByteOrder[j] < (fcs.Head.Parameter[i].BitSize/DEFACTO_BYTEL))
+	    fcs.Head.Parameter[i].ByteOrder.push_back (fcs.Head.ByteOrder[j]);
       }
 
     // Why? is this some lame attempt at redundancy checking?
     // Idiocy.
-    if (Head.has_keyword ("$TOT"))
-      Head.Total = convert<std::size_t>(Head["$TOT"]);
+    if (fcs.Head.has_keyword ("$TOT"))
+      fcs.Head.Total = convert<std::size_t>(fcs.Head["$TOT"]);
     else if (Compliance_P)
       throw no_total_keyword ();
 
-    std::cout << "L(2) " << Head["$MODE"] << std::endl;
+    std::cout << "L(2) " << fcs.Head["$MODE"] << std::endl;
 
     // legal: [L]ist, [U]ncorrelated, [C]orrelated
-    if (Head.has_keyword ("$MODE"))
-      ;//Head.Mode = Head["$MODE"];
+    if (fcs.Head.has_keyword ("$MODE"))
+      ;//fcs.Head.Mode = fcs.Head["$MODE"];
     else
       throw no_mode_keyword ();
     std::cout << "L(2.1)" << std::endl;
-    /*if ("U" == Head.Mode)
+    /*if ("U" == fcs.Head.Mode)
       throw uncorrelated_mode ();
-    if ("C" == Head.Mode)
+    if ("C" == fcs.Head.Mode)
     throw correlated_mode ();*/
     
     std::cout << "L(1)" << std::endl;
 
     // legal: [A]SCII, [I]nteger, [D]ouble, [F]loat
-    if (Head.has_keyword ("$DATATYPE"))
-      Head.Datatype = Head["$DATATYPE"];
+    if (fcs.Head.has_keyword ("$DATATYPE"))
+      fcs.Head.Datatype = fcs.Head["$DATATYPE"];
     else
       throw no_datatype_keyword ();
-    if ("A" == Head.Datatype && Variable)
-      Head.Datatype = "*";
-    if ("A" == Head.Datatype)
+    if ("A" == fcs.Head.Datatype && Variable)
+      fcs.Head.Datatype = "*";
+    if ("A" == fcs.Head.Datatype)
       throw fixed_ascii_datatype ();
-    if ("F" == Head.Datatype)
+    if ("F" == fcs.Head.Datatype)
       throw float_datatype ();
-    if ("D" == Head.Datatype)
+    if ("D" == fcs.Head.Datatype)
       throw double_datatype ();
     
-    if (Head.has_keyword ("$CYT"))
-      Head.Cytometer = Head["$CYT"];
+    if (fcs.Head.has_keyword ("$CYT"))
+      fcs.Head.Cytometer = fcs.Head["$CYT"];
 
     std::cout << "L(0)" << std::endl;
 
-    if ("L" == Head.Mode)
+    if ("L" == fcs.Head.Mode)
       { // list of vectors
 	// we grab up to, but no more than Total
 	integral_vector_list_t ivl;
-	switch (Head.Datatype[0])
+	switch (fcs.Head.Datatype[0])
 	  {
 	  case 'I': ivl
-	      = mode_L_integral (DataBuffer, Head);
+	      = mode_L_integral (DataBuffer, fcs.Head);
 	    break;
 	  case '*': ivl
-	      = mode_L_ASCII_variable (DataBuffer, Head);
+	      = mode_L_ASCII_variable (DataBuffer, fcs.Head);
 	    break;
 	  default : break;
 	  }
-	convert (Data, ivl);
+	convert (fcs.Data, ivl);
       }
 
     std::cout << "LAST" << std::endl;
