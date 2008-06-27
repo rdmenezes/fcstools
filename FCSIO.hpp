@@ -79,8 +79,8 @@ namespace FCSTools
     bool has_keyword (std::string const& key) const {
       return this->AllKeywords.end() != this->AllKeywords.find(key);
     }
-    std::string& operator [] (std::string const& key) {
-      return this->AllKeywords[key];
+    std::string const& operator [] (std::string const& key) {
+      return this->AllKeywords.find(key)->second;
     }
   };
 
@@ -525,8 +525,7 @@ namespace FCSTools
     std::cout << "HERE-1" << std::endl;
 
     if (fcs.Head.has_keyword ("$FIL"))
-      ;//fcs.Head.File = fcs.Head["$FIL"];
-    fcs.Head["$FIL"];
+      fcs.Head.File = fcs.Head["$FIL"];
 
     std::cout << "HERE-2" << std::endl;
 
