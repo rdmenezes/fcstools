@@ -419,7 +419,7 @@ namespace FCSTools
     FCSFile.read (DumbBuffer, KindLength * LocationSize * NumberLocations);
     DumbBuffer[HeaderLength] = 0;
 
-    FCSKind = std::string (DumbBuffer, DumbBuffer+KindLength);
+    /*FCSKind = std::string (DumbBuffer, DumbBuffer+KindLength);
     std::stringstream ssLocations;
     for (std::size_t i=0; i<NumberLocations; ++i)
       {
@@ -434,7 +434,7 @@ namespace FCSTools
 
     bool KeyWordDataSection = false;
 
-    /*if (KeysEnd < KeysBegin)
+    if (KeysEnd < KeysBegin)
       throw text_miscalculation_error ();
     if (DataEnd < DataBegin)
       if (DataEnd == DataBegin && 0 == DataBegin)
