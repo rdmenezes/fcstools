@@ -432,7 +432,7 @@ namespace FCSTools
       }
     ssLocations >> KeysBegin >> KeysEnd >> DataBegin >> DataEnd;
 
-    /*if (2.0 != Kind && 3.0 != Kind)
+    if (2.0 != Kind && 3.0 != Kind)
       throw unsupported_fcs_format ();
 
     bool KeyWordDataSection = false;
@@ -448,7 +448,7 @@ namespace FCSTools
             throw data_miscalculation_error ();
         }
 
-    FCSFile.seekg (InitialOffset+KeysBegin);
+    /*FCSFile.seekg (InitialOffset+KeysBegin);
     
     // Now we get the key/value pairs; they
     // are delimited by the first character in the
