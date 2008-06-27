@@ -391,7 +391,7 @@ namespace FCSTools
 
     FCS<ValueType> fcs;
 
-    // This is the `header' section as defined in the FCS2.0 standard;
+    /*// This is the `header' section as defined in the FCS2.0 standard;
     // There are some sort of noises about having `8' characters for this,
     // `10' characters for that, etc. etc.
     // I assume the data is white-space delimited. This is non-standard
@@ -697,7 +697,7 @@ namespace FCSTools
           default : break;
           }
         convert (fcs.Data, ivl);
-      }
+      }*/
 
     return fcs;
   }
