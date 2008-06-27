@@ -63,6 +63,7 @@ namespace FCSTools
   {
     Header () {}
     typedef NData parameter_type;
+    std::string d1, d2, d3;
     std::string File;
     std::string Mode;
     std::string Datatype;
@@ -529,7 +530,7 @@ namespace FCSTools
 
     if (fcs.Head.has_keyword ("$FIL")) {
       std::cout << "BSPLIT" << std::endl;
-      fcs.Head.Date = "FOO";
+      fcs.Head.File = "FOO";
       std::cout << "SPLIT" << std::endl;
       fcs.Head["$FIL"];
       std::cout << "ASPLIT" << std::endl;
