@@ -417,10 +417,10 @@ namespace FCSTools
     const std::size_t NumberLocations = 4;
     const std::size_t HeaderLength = KindLength + LocationSize * NumberLocations;
     std::cout << "Header Length " << HeaderLength << std::endl;
-    char DumbBuffer[128];
-    //FCSFile.seekg (InitialOffset);
-    //FCSFile.read (DumbBuffer, KindLength * LocationSize * NumberLocations);
-    //DumbBuffer[HeaderLength] = 0;
+    char DumbBuffer[HeaderLength+10];
+    FCSFile.seekg (InitialOffset);
+    FCSFile.read (DumbBuffer, HeaderLength);
+    DumbBuffer[HeaderLength] = 0;
 
     /*FCSKind = std::string (DumbBuffer, DumbBuffer+KindLength);
     std::stringstream ssLocations;
