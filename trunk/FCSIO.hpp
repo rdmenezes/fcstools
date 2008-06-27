@@ -398,7 +398,7 @@ namespace FCSTools
     // but if you *do* have a crap-load of data, FCS2.0 is not the standard
     // for you.
 
-    std::string FCSKind;
+    /*std::string FCSKind;
     std::size_t KeysBegin, KeysEnd, KeySection, DataBegin, DataEnd, DataSection;
     FCSFile >> FCSKind;
 
@@ -419,7 +419,7 @@ namespace FCSTools
     FCSFile.read (DumbBuffer, KindLength * LocationSize * NumberLocations);
     DumbBuffer[HeaderLength] = 0;
 
-    /*FCSKind = std::string (DumbBuffer, DumbBuffer+KindLength);
+    FCSKind = std::string (DumbBuffer, DumbBuffer+KindLength);
     std::stringstream ssLocations;
     for (std::size_t i=0; i<NumberLocations; ++i)
       {
