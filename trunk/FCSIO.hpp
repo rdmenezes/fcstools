@@ -73,11 +73,13 @@ namespace FCSTools
     std::size_t Nextdata;
     byteorder_t ByteOrder;
     NData Parameter;
-    std::map<std::string,std::string> AllKeywords;
+    std::map<std::string, std::string> AllKeywords;
     bool has_keyword (std::string const& key) const {
-      return this->AllKeywords.end () != this->AllKeywords.find (key); }
+      return this->AllKeywords.end() != this->AllKeywords.find(key);
+    }
     std::string& operator [] (std::string const& key) {
-      return this->AllKeywords[key]; }
+      return this->AllKeywords[key];
+    }
   };
 
  
@@ -376,7 +378,7 @@ namespace FCSTools
     const std::size_t InitialOffset = FCSFile.tellg ();
 
     FCS<ValueType> fcs;
-    Header& Head = fcs.Head;
+    //Header& Head = fcs.Head;
     VElementT& Data = fcs.Data;
 
     // This is the `header' section as defined in the FCS2.0 standard;
@@ -417,6 +419,8 @@ namespace FCSTools
       }
     ssLocations >> KeysBegin >> KeysEnd >> DataBegin >> DataEnd;
 
+    std::cout << "L(7)" << std::endl;
+
     if (2.0 != Kind && 3.0 != Kind)
       throw unsupported_fcs_format ();
 
@@ -432,6 +436,8 @@ namespace FCSTools
 	    else
 	      throw data_miscalculation_error ();
 	  }
+
+    std::cout << "L(6)" << std::endl;
 
     FCSFile.seekg (InitialOffset+KeysBegin);
     
@@ -451,21 +457,23 @@ namespace FCSTools
 	std::string key, value;
 	std::getline (ss, key, Delimiter);
 	std::getline (ss, value, Delimiter);
-	Head[key] = value;
+	fcs.Head[key] = value;
       }
     while (ss);
     
     if (KeyWordDataSection)
       {
-	if (Head.has_keyword ("$BEGINDATA"))
-	  DataBegin = convert<std::size_t>(Head["$BEGINDATA"]);
+	if (fcs.Head.has_keyword ("$BEGINDATA"))
+	  DataBegin = convert<std::size_t>(fcs.Head["$BEGINDATA"]);
 	else
 	  throw data_miscalculation_error ();
-	if (Head.has_keyword ("$ENDDATA"))
-	  DataEnd = convert<std::size_t>(Head["$ENDDATA"]);
+	if (fcs.Head.has_keyword ("$ENDDATA"))
+	  DataEnd = convert<std::size_t>(fcs.Head["$ENDDATA"]);
 	else
 	  throw data_miscalculation_error ();	
       }
+
+    std::cout << "L(5)" << std::endl;
 
     // Go to the Data section; we will read the data in
     // as 4096-byte-pages
@@ -474,36 +482,42 @@ namespace FCSTools
     std::vector<unsigned char> DataBuffer;
     if (true)
       {
+	std::cout << "U(0)" << std::endl;
 	const std::size_t PageSize = 128000;
-	DataBuffer.reserve (DataSection);
+	DataBuffer.reserve(DataSection);
 	std::size_t Chunk = 0;
 	char Buffer[PageSize];
+	std::cout << "U(1)" << std::endl;
 	while (Chunk < DataSection)
 	  {
+	    std::cout << "S(1)" << std::endl;
 	    std::size_t GetC = PageSize;
 	    if ((Chunk+GetC) > DataSection)
 	      GetC = DataSection - Chunk;
 	    FCSFile.read (Buffer, GetC);
-	    DataBuffer.insert (DataBuffer.end (), Buffer, Buffer+GetC);
+	    DataBuffer.insert (DataBuffer.end(), Buffer, Buffer+GetC);
 	    Chunk += PageSize;
 	  }
+	std::cout << "U(2)" << std::endl;
       }
     else
       {
 	char *mBuffer = new char[DataSection];
 	FCSFile.read (mBuffer, DataSection);
-	DataBuffer.insert (DataBuffer.end (), mBuffer, mBuffer+DataSection);
+	DataBuffer.insert (DataBuffer.end(), mBuffer, mBuffer+DataSection);
       }
-    
+
     // Pick through and get a bunch of keywords real-quick
     // Keywords that "throw" are "fatal": they are -required-
     // to interpret the FCS file.
-    if (Head.has_keyword ("$PAR"))
+    if (fcs.Head.has_keyword ("$PAR"))
       Head.Parameter = NData(convert<std::size_t>(Head["$PAR"]));
     else
       throw no_par_keyword ();
 
     const std::size_t nParameters = Head.Parameter.size ();
+
+    std::cout << "V(0)" << std::endl;
 
     // some keywords throw if they are 'required' by the standard
     // but are not required to actually read the file; they
@@ -519,17 +533,30 @@ namespace FCSTools
     if (Head.has_keyword ("$BTIM"))
       Head.BeginTime = Head["$BTIM"];
 
+    std::cout << "V(1)" << std::endl;
+
     if (Head.has_keyword ("$ETIM"))
       Head.EndTime = Head["$ETIM"];
 
-    if (Head.has_keyword ("$FIL"))
-      Head.File = Head["$FIL"];
+    std::cout << "V(2)" << std::endl;
+
+    if (Head.has_keyword ("$FIL")) {
+      std::cout << "Pre " << Head["$FIL"] << std::endl;
+      //Head.File = Head["$FIL"];
+      std::cout << "Post " << Head["$FIL"] << std::endl;
+    }
+
+    std::cout << "V(3)" << std::endl;
 
     if (Head.has_keyword ("$DATE"))
       Head.Date = Head["$DATE"];
 
+    std::cout << "V(4)" << std::endl;
+
     bool Variable = false;
-    
+
+    std::cout << "L(4)" << std::endl;
+
     for (std::size_t npar = 0; npar < nParameters; ++npar)
       {
 	std::stringstream par;
@@ -616,6 +643,8 @@ namespace FCSTools
     else
       throw no_byteorder_keyword ();
 
+    std::cout << "L(3)" << std::endl;
+
     while (true)
       {
 	std::string byteo;
@@ -642,17 +671,22 @@ namespace FCSTools
       Head.Total = convert<std::size_t>(Head["$TOT"]);
     else if (Compliance_P)
       throw no_total_keyword ();
-    
+
+    std::cout << "L(2) " << Head["$MODE"] << std::endl;
+
     // legal: [L]ist, [U]ncorrelated, [C]orrelated
     if (Head.has_keyword ("$MODE"))
-      Head.Mode = Head["$MODE"];
+      ;//Head.Mode = Head["$MODE"];
     else
       throw no_mode_keyword ();
-    if ("U" == Head.Mode)
+    std::cout << "L(2.1)" << std::endl;
+    /*if ("U" == Head.Mode)
       throw uncorrelated_mode ();
     if ("C" == Head.Mode)
-      throw correlated_mode ();
+    throw correlated_mode ();*/
     
+    std::cout << "L(1)" << std::endl;
+
     // legal: [A]SCII, [I]nteger, [D]ouble, [F]loat
     if (Head.has_keyword ("$DATATYPE"))
       Head.Datatype = Head["$DATATYPE"];
@@ -669,7 +703,9 @@ namespace FCSTools
     
     if (Head.has_keyword ("$CYT"))
       Head.Cytometer = Head["$CYT"];
-     
+
+    std::cout << "L(0)" << std::endl;
+
     if ("L" == Head.Mode)
       { // list of vectors
 	// we grab up to, but no more than Total
@@ -686,6 +722,8 @@ namespace FCSTools
 	  }
 	convert (Data, ivl);
       }
+
+    std::cout << "LAST" << std::endl;
 
     return fcs;
   }
