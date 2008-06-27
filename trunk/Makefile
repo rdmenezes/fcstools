@@ -1,16 +1,19 @@
-all: fcstest fcsinfo fcsconvert fcstofchr fchrtofcs
+PP = g++
+FLAGS = -O3 -I.
+
+all: fcsinfo fcsconvert fcstofchr fchrtofcs
 
 fcstest: testFCS.cpp FCSIO.hpp FCSUtil.hpp
-	g++ testFCS.cpp -O3 -o fcstest
+	${PP} testFCS.cpp ${FLAGS} -o fcstest
 
 fcsinfo: FCSIO.hpp FCSInfo.cpp FCSUtil.hpp
-	g++ FCSInfo.cpp -O3 -o fcsinfo
+	${PP} FCSInfo.cpp ${FLAGS} -o fcsinfo
 
 fcsconvert: FCSIO.hpp FCSTools.hpp FCSUtil.hpp FCSConvert.cpp
-	g++ FCSConvert.cpp -O3 -o fcsconvert
+	${PP} FCSConvert.cpp ${FLAGS} -o fcsconvert
 
 fcstofchr: FCSxToHR.cpp FCSTools.hpp FCSUtil.hpp FCSIO.hpp FCSHRIO.hpp
-	g++ FCSxToHR.cpp -O3 -o fcstofchr
+	${PP} FCSxToHR.cpp ${FLAGS} -o fcstofchr
 
 fchrtofcs: fcstofchr
 	cp fcstofchr fchrtofcs

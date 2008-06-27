@@ -1,7 +1,7 @@
 #include<fstream>
-#include"FCSTools.hpp"
-#include"FCSIO.hpp"
-#include"FCSHRIO.hpp"
+#include<FCSTools.hpp>
+#include<FCSIO.hpp>
+#include<FCSHRIO.hpp>
 
 int main (int argc, char *argv[])
 {
