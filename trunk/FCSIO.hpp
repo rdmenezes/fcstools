@@ -522,10 +522,12 @@ namespace FCSTools
     if (fcs.Head.has_keyword ("$ETIM"))
       fcs.Head.EndTime = fcs.Head["$ETIM"];
 
-    if (fcs.Head.has_keyword ("$FIL"))
-      fcs.Head.File = "FOO";//fcs.Head["$FIL"];
+    std::cout << "HERE-1" << std::endl;
 
-    std::cout << "HERE" << std::endl;
+    if (fcs.Head.has_keyword ("$FIL"))
+      fcs.Head.File;//fcs.Head["$FIL"];
+
+    std::cout << "HERE-2" << std::endl;
 
     if (fcs.Head.has_keyword ("$DATE"))
       fcs.Head.Date = fcs.Head["$DATE"];
