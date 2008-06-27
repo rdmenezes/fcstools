@@ -79,8 +79,11 @@ namespace FCSTools
     bool has_keyword (std::string const& key) const {
       return this->AllKeywords.end() != this->AllKeywords.find(key);
     }
-    std::string const& operator [] (std::string const& key) {
+    std::string const& operator [] (std::string const& key) const {
       return this->AllKeywords.find(key)->second;
+    }
+    std::string& operator [] (std::string const& key) {
+      return this->AllKeywords[key];
     }
   };
 
