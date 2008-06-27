@@ -36,8 +36,10 @@ int main (int argc, char *argv[])
   std::fstream file (argv[1], std::ios::binary|std::ios::in);
   try
     {
+      std::cout << "BEFORE READ" << std::endl;
       FCS<std::size_t> fcs
 	= Reader<std::size_t> (file, flags["--compliant-mode"]);
+      std::cout << "AFTER READ" << std::endl;
 
       if (flags["--dump-keys-only"])
 	{
