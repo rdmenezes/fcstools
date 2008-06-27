@@ -411,12 +411,12 @@ namespace FCSTools
     else if ("FCS3.0" == FCSKind)
       Kind = 3.0;
 
-    /*// Want any teeth pulled?
+    // Want any teeth pulled?
     const std::size_t KindLength = 10;
     const std::size_t LocationSize = 8;
     const std::size_t NumberLocations = 4;
     const std::size_t HeaderLength = KindLength + LocationSize * NumberLocations;
-    char DumbBuffer[128];
+    /*char DumbBuffer[128];
     FCSFile.seekg (InitialOffset);
     FCSFile.read (DumbBuffer, KindLength * LocationSize * NumberLocations);
     DumbBuffer[HeaderLength] = 0;
