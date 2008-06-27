@@ -459,7 +459,7 @@ namespace FCSTools
     FCSFile.get (cKeyWordBuffer, KeySection+1, 0);
     std::string KeyWordBuffer (cKeyWordBuffer+1, KeySection+1);
 
-    /*std::stringstream ss (KeyWordBuffer);
+    /*HERE@114*/std::stringstream ss (KeyWordBuffer);
     do
       {
         std::string key, value;
@@ -699,7 +699,7 @@ namespace FCSTools
           default : break;
           }
         convert (fcs.Data, ivl);
-      }*/
+      }
 
     return fcs;
   }
