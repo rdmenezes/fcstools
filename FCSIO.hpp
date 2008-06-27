@@ -674,14 +674,14 @@ namespace FCSTools
 
     // legal: [L]ist, [U]ncorrelated, [C]orrelated
     if (fcs.Head.has_keyword ("$MODE"))
-      ;//fcs.Head.Mode = fcs.Head["$MODE"];
+      fcs.Head.Mode = fcs.Head["$MODE"];
     else
       throw no_mode_keyword ();
     std::cout << "L(2.1)" << std::endl;
-    /*if ("U" == fcs.Head.Mode)
+    if ("U" == fcs.Head.Mode)
       throw uncorrelated_mode ();
     if ("C" == fcs.Head.Mode)
-    throw correlated_mode ();*/
+      throw correlated_mode ();
     
     std::cout << "L(1)" << std::endl;
 
