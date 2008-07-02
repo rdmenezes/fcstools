@@ -8,7 +8,7 @@ The FCSTools is releasing its first Tarball (actually a zip file)!
 
 = Details =
 
-This is the first release of the FCSTools utilities. The tarball contains the pertinent files from the SVN repository (which can be browsed elsewhere on the site). This tarball is of revision 71 (r71) and is known to compile on Mac OS X 10.4.10 with GCC 4.0.1 (Apple build 5367). It is also known to compile on Linux.
+This is the first release of the FCSTools utilities. The tarball contains the pertinent files from the SVN repository (which can be browsed elsewhere on the site). This tarball is of revision 120 (r120) and is known to compile on Mac OS X 10.5.4 with GCC 4.3.0 . It is also known to compile on Linux.
 
 There is no reason it should not compile on any reasonably compliant C++ compiler.
 
