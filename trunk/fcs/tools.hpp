@@ -1,9 +1,9 @@
 #ifndef ARBITRARY_GUARD_MACRO_CODE_OF_DOOM_WHICH_IS_CALLED_FCS_2_TOOLS
 #define ARBITRARY_GUARD_MACRO_CODE_OF_DOOM_WHICH_IS_CALLED_FCS_2_TOOLS
 
-#include<FCSUtil.hpp>
-#include<FCSIO.hpp>
-#include<FCSHRIO.hpp>
+#include<fcs/util.hpp>
+#include<fcs/io.hpp>
+#include<fcs/hrio.hpp>
 #include<set>
 
 namespace FCSTools

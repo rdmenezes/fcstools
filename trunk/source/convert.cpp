@@ -4,8 +4,8 @@
 #include<iostream>
 #include<string>
 #include<set>
-#include<FCSIO.hpp>
-#include<FCSTools.hpp>
+#include<fcs/io.hpp>
+#include<fcs/tools.hpp>
 
 void show_help ();
 

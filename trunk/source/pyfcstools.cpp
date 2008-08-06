@@ -1,7 +1,7 @@
 #include <boost/python.hpp>
 #include <boost/python/module.hpp>
 #include <boost/python/def.hpp>
-#include <FCSIO.hpp>
+#include <fcs/io.hpp>
 
 typedef FCSTools::FCS<std::size_t> fcs_file;
 

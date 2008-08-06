@@ -18,9 +18,13 @@ fcstofchr: source/fcsxtohr.cpp fcs/tools.hpp fcs/util.hpp fcs/io.hpp fcs/hrio.hp
 fchrtofcs: fcstofchr
 	cp fcstofchr fchrtofcs
 
-py-fcs: pyfcstools.cpp
+py-fcs: source/pyfcstools.cpp
 	bjam toolset=darwin
 	cp bin/darwin/debug/macosx-version-10.4/*.* .
+
+test: fcstest
+	./fcstest
+	python test/fcstools.py
 
 clean:
 	rm -f fcstest fcsinfo fcsconvert fcstofchr fchrtofcs *.so *.o

@@ -5,7 +5,7 @@
 #include<sstream>
 #include<string>
 #include<exception>
-#include<FCSUtil.hpp>
+#include<fcs/util.hpp>
 
 namespace FCSTools
 {
