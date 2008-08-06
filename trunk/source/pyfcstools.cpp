@@ -8,6 +8,7 @@
 #include <boost/python/module.hpp>
 #include <boost/python/args.hpp>
 #include <boost/python/class.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 // fcs
 #include <fcs/io.hpp>
@@ -53,7 +54,7 @@ BOOST_PYTHON_MODULE(fcstools)
 		;
 
 	bpy::class_<data_list_t>("Data")
-		.def("size", &data_list_t::size)
+		.def(bpy::vector_indexing_suite<data_list_t, true> ());
 		;
 	
 	bpy::class_<FCSTools::Header>("Header")
