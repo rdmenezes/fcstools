@@ -11,13 +11,11 @@ namespace FCSTools
 
   struct merge_inconsistent_data_length : fcs_error {
     virtual const char* what () const throw () {
-      return "Inconsistent data length while"
-	" attempting to merge files"; }
+      return "Inconsistent data length while attempting to merge files"; }
   };
   struct cat_inconsistent_row_length : fcs_error {
     virtual const char* what () const throw () {
-      return "Inconsistent number of columns while"
-	" attempting to concatenate files";}
+      return "Inconsistent number of columns while attempting to concatenate files";}
   };
 
   /*
