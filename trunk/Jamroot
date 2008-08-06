@@ -19,7 +19,7 @@ import python ;
 
 # Declare the three extension modules.  You can specify multiple
 # source files after the colon separated by spaces.
-python-extension fcstools_ext : pyfcstools.cpp ;
+python-extension fcstools : pyfcstools.cpp ;
 
 # A little "rule" (function) to clean up the syntax of declaring tests
 # of these extension modules.

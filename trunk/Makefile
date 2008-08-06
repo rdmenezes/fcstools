@@ -18,5 +18,10 @@ fcstofchr: FCSxToHR.cpp FCSTools.hpp FCSUtil.hpp FCSIO.hpp FCSHRIO.hpp
 fchrtofcs: fcstofchr
 	cp fcstofchr fchrtofcs
 
+py-fcs: pyfcstools.cpp
+	bjam toolset=darwin
+	cp bin/darwin/debug/macosx-version-10.4/*.* .
+
 clean:
-	rm -f fcstest fcsinfo fcsconvert fcstofchr fchrtofcs
+	rm -f fcstest fcsinfo fcsconvert fcstofchr fchrtofcs *.so *.o
+	rm -rf bin
