@@ -11,7 +11,9 @@ use-project boost
 # boost_python library from the project whose global ID is
 # /boost/python.
 project
-  : requirements <library>/boost/python//boost_python ;
+  : requirements <library>/boost/python//boost_python
+	  						 <include>./
+	;
 
 import python ;
 
