@@ -25,8 +25,13 @@ std::string to_string (fcs_file const& fcs) {
 	return oss.str();
 }
 
+typedef std::vector<std::size_t> vector_size_t;
+typedef std::vector<vector_size_t> data_list_t;
+
 BOOST_PYTHON_MODULE(fcstools)
 {
+
+
 	boost::python::class_<FCSTools::Header>("Header")
 		;
 
