@@ -17,7 +17,7 @@ namespace FCSTools
     virtual const char* what () const throw () {
       return "Inconsistent number of columns while attempting to concatenate files";}
   };
-
+	
   /*
     FCS Concept:
     FCS
@@ -42,23 +42,23 @@ namespace FCSTools
     const std::size_t DataLength = fcses[0].Data.size ();
     for (std::size_t i=0; i<fcses.size (); ++i)
       if (DataLength != fcses[i].Data.size ())
-	throw merge_inconsistent_data_length ();
-
+				throw merge_inconsistent_data_length ();
+		
     Result.Head = fcses[0].Head; // simple-copy
     for (std::size_t i=1; i<fcses.size (); ++i)
       { // append parameters
-	for (std::size_t j=0; j<fcses[i].Head.Parameter.size (); ++j)
-	  Result.Head.Parameter.push_back (fcses[i].Head.Parameter[j]);
+				for (std::size_t j=0; j<fcses[i].Head.Parameter.size (); ++j)
+					Result.Head.Parameter.push_back (fcses[i].Head.Parameter[j]);
       }
-
+		
     Result.Data = fcses[0].Data;
-
+		
     for (std::size_t i=0; i<DataLength; ++i)
       for (std::size_t j=1; j<fcses.size (); ++j)
-	for (std::size_t k=0; k<fcses[j].Data[i].size (); ++k)
-	  Result.Data[i].push_back (fcses[j].Data[i][k]);
+				for (std::size_t k=0; k<fcses[j].Data[i].size (); ++k)
+					Result.Data[i].push_back (fcses[j].Data[i][k]);
   }
-
+	
   template <typename FCS>
   void cat (FCS& Result, std::vector<FCS> const& fcses)
   {
@@ -68,15 +68,15 @@ namespace FCSTools
     const std::size_t RowLength = fcses[0].Head.Parameter.size ();
     for (std::size_t i=0; i<fcses.size (); ++i)
       if (RowLength != fcses[i].Head.Parameter.size ())
-	throw cat_inconsistent_row_length ();
-
+				throw cat_inconsistent_row_length ();
+		
     Result.Head = fcses[0].Head; // simple copy
     for (std::size_t i=0; i<fcses.size (); ++i)
       Result.Data.insert (Result.Data.end (),
-			  fcses[i].Data.begin (),
-			  fcses[i].Data.end ());
+													fcses[i].Data.begin (),
+													fcses[i].Data.end ());
   }
-
+	
   template <typename FCS>
   void split (std::vector<FCS>& Result, FCS const& fcs)
   {
@@ -85,16 +85,16 @@ namespace FCSTools
     Result = std::vector<FCS> (fcs.Head.Parameter.size ());
     for (std::size_t i=0; i<Result.size (); ++i)
       {
-	Result[i].Head = fcs.Head;
-	Result[i].Head.Parameter.clear ();
-	Result[i].Head.Parameter.push_back (fcs.Head.Parameter[i]);
-	Result[i].Data = data_type (fcs.Data.size ());
+				Result[i].Head = fcs.Head;
+				Result[i].Head.Parameter.clear ();
+				Result[i].Head.Parameter.push_back (fcs.Head.Parameter[i]);
+				Result[i].Data = data_type (fcs.Data.size ());
       }
     for (std::size_t i=0; i<fcs.Data.size (); ++i)
       for (std::size_t j=0; j<fcs.Data[i].size (); ++j)
-	Result[j].Data[i] = element_type (1, fcs.Data[i][j]);
+				Result[j].Data[i] = element_type (1, fcs.Data[i][j]);
   }
-
+	
   template <typename FCS>
   void truncate (FCS& Result, FCS const& fcs, signed long N)
   {
@@ -112,10 +112,10 @@ namespace FCSTools
     else
       fcs.Data.erase (fcs.Data.end () - aTrunc, fcs.Data.end ());
   }
-
+	
   template <typename FCS>
   void erase_columns (FCS& Result, FCS const& fcs,
-		      std::vector<std::size_t> const& Columns)
+											std::vector<std::size_t> const& Columns)
   {
     Result = fcs;
     erase_columns (Result, Columns);
@@ -128,17 +128,17 @@ namespace FCSTools
     typename FCS::parameter_type Parameter;
     for (std::size_t i=0; i<Result.Head.Parameter.size (); ++i)
       if (Columns.end () == Columns.find (i+1))
-	Parameter.push_back (Result.Head.Parameter[i]);
+				Parameter.push_back (Result.Head.Parameter[i]);
     Result.Head.Parameter = Parameter;
-
+		
     typename FCS::data_type Data (Result.Data.size ());
     for (std::size_t i=0; i<Result.Data.size (); ++i)
       for (std::size_t j=0; j<Result.Data[i].size (); ++j)
-	if (Columns.end () == Columns.find (j+1))
-	  Data[i].push_back (Result.Data[i][j]);
+				if (Columns.end () == Columns.find (j+1))
+					Data[i].push_back (Result.Data[i][j]);
     Result.Data = Data;
   }
-
+	
   template <typename FCS>
   void convert (FCS const& fcs, HR::FCSHR& hr)
   {
@@ -146,17 +146,17 @@ namespace FCSTools
     hr.Data.clear ();
     for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
       {
-	HR::FCSHR::ColumnDatum CD;
-	CD.Name = fcs.Head.Parameter[i].Name;
-	CD.Range = fcs.Head.Parameter[i].Range;
-	CD.Scale = fcs.Head.Parameter[i].Scale;
-	hr.Head.Parameter.push_back (CD);
+				HR::FCSHR::ColumnDatum CD;
+				CD.Name = fcs.Head.Parameter[i].Name;
+				CD.Range = fcs.Head.Parameter[i].Range;
+				CD.Scale = fcs.Head.Parameter[i].Scale;
+				hr.Head.Parameter.push_back (CD);
       }
     convert (hr.Data, fcs.Data); 
   }
-
+	
   /*
-   std::string File;
+		std::string File;
     std::string Mode;
     std::string Datatype;
     std::string BeginTime;
@@ -167,8 +167,8 @@ namespace FCSTools
     std::size_t Total;
     std::size_t Nextdata;
     byteorder_t ByteOrder;
-   */
-
+	*/
+	
   template <typename FCS, typename ValueType>
   void convert (FCS const& fcs, FCSTools::FCS<ValueType>& targ)
   {
@@ -188,17 +188,17 @@ namespace FCSTools
     targ.Head.ByteOrder.insert (targ.Head.ByteOrder.begin (), ottf, ottf+4);
     for (std::size_t i=0; i<fcs.Head.Parameter.size (); ++i)
       {
-	NDatum CD;
-	CD.Name = fcs.Head.Parameter[i].Name;
-	CD.Range = fcs.Head.Parameter[i].Range;
-	CD.Scale = fcs.Head.Parameter[i].Scale;
-	CD.BitSize = sizeof(blessed_integral) * DEFACTO_BYTEL;
-	CD.ByteOrder = targ.Head.ByteOrder;
-	targ.Head.Parameter.push_back (CD);
+				NDatum CD;
+				CD.Name = fcs.Head.Parameter[i].Name;
+				CD.Range = fcs.Head.Parameter[i].Range;
+				CD.Scale = fcs.Head.Parameter[i].Scale;
+				CD.BitSize = sizeof(blessed_integral) * DEFACTO_BYTEL;
+				CD.ByteOrder = targ.Head.ByteOrder;
+				targ.Head.Parameter.push_back (CD);
       }
     convert (targ.Data, fcs.Data); 
   }
-
+	
 }
 
 #endif//ARBITRARY_GUARD_MACRO_CODE_OF_DOOM_WHICH_IS_CALLED_FCS_2_TOOLS
