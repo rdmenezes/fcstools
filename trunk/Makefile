@@ -1,19 +1,19 @@
 PP = g++
 FLAGS = -O3 -I.
 
-all: fcsinfo fcsconvert fcstofchr fchrtofcs
+all: fcsinfo fcsconvert fcstofchr fchrtofcs py-fcs
 
-fcstest: testFCS.cpp FCSIO.hpp FCSUtil.hpp
-	${PP} testFCS.cpp ${FLAGS} -o fcstest
+fcstest: test/FCS.cpp fcs/io.hpp fcs/util.hpp
+	${PP} test/FCS.cpp ${FLAGS} -o fcstest
 
-fcsinfo: FCSIO.hpp FCSInfo.cpp FCSUtil.hpp
-	${PP} FCSInfo.cpp ${FLAGS} -o fcsinfo
+fcsinfo: fcs/io.hpp source/info.cpp fcs/util.hpp
+	${PP} source/info.cpp ${FLAGS} -o fcsinfo
 
-fcsconvert: FCSIO.hpp FCSTools.hpp FCSUtil.hpp FCSConvert.cpp
-	${PP} FCSConvert.cpp ${FLAGS} -o fcsconvert
+fcsconvert: fcs/io.hpp fcs/tools.hpp fcs/util.hpp source/convert.cpp
+	${PP} source/convert.cpp ${FLAGS} -o fcsconvert
 
-fcstofchr: FCSxToHR.cpp FCSTools.hpp FCSUtil.hpp FCSIO.hpp FCSHRIO.hpp
-	${PP} FCSxToHR.cpp ${FLAGS} -o fcstofchr
+fcstofchr: source/fcsxtohr.cpp fcs/tools.hpp fcs/util.hpp fcs/io.hpp fcs/hrio.hpp
+	${PP} source/fcsxtohr.cpp ${FLAGS} -o fcstofchr
 
 fchrtofcs: fcstofchr
 	cp fcstofchr fchrtofcs
