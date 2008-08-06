@@ -27,9 +27,13 @@ std::string to_string (fcs_file const& fcs) {
 
 BOOST_PYTHON_MODULE(fcstools)
 {
+	boost::python::class_<FCSTools::Header>("Header")
+		;
 
 	boost::python::class_<fcs_file>("FCS")
+		.def_readonly("Head", &fcs_file::Head);
 		;
+
 	boost::python::def("open", open_fcs_with,
 										 boost::python::args("filename", "compliance"),
 										 "Opens an FCS file from disk; allows an optional compliance mode flag.")
