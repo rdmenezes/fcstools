@@ -31,7 +31,8 @@ BOOST_PYTHON_MODULE(fcstools)
 		;
 
 	boost::python::class_<fcs_file>("FCS")
-		.def_readonly("Head", &fcs_file::Head);
+		.def_readonly("Head", &fcs_file::Head)
+		.def_readonly("Data", &fcs_file::Data)
 		;
 
 	boost::python::def("open", open_fcs_with,
