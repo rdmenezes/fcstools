@@ -5,6 +5,8 @@
 #include<fcs/io.hpp>
 #include<fcs/hrio.hpp>
 #include<set>
+#include<cstdlib>
+#include<cmath>
 
 namespace FCSTools
 {
